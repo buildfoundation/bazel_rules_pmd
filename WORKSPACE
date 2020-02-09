@@ -43,3 +43,21 @@ maven_install(
         "https://repo1.maven.org/maven2",
     ],
 )
+
+# Testing
+
+## Skylib
+
+skylib_version = "1.0.2"
+
+skylib_sha = "97e70364e9249702246c0e9444bccdc4b847bed1eb03c5a3ece4f83dfe6abc44"
+
+http_archive(
+    name = "bazel_skylib",
+    sha256 = skylib_sha,
+    url = "https://github.com/bazelbuild/bazel-skylib/releases/download/{v}/bazel-skylib-{v}.tar.gz".format(v = skylib_version),
+)
+
+load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
+bazel_skylib_workspace()
