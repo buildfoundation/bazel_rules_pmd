@@ -13,6 +13,6 @@ set -e
 
 set -x
 
-test BAZEL_EXIT_CODE != 0
+test ${BAZEL_EXIT_CODE} != 0
 
 test -f "${OUTPUT_DIR}/${TARGET}_pmd_report.txt"
