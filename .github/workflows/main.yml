@@ -40,6 +40,6 @@ jobs:
       - name: "Analysis tests"
         run: bazel test //tests/analysis:tests
 
-      - name: "Run sample"
-        run: bazel build //tests/integration:sample
+      - name: "Integration tests"
+        run: bash tests/integration/suite.sh
 
