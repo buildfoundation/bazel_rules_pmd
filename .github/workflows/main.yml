@@ -37,6 +37,9 @@ jobs:
           curl --location --fail https://github.com/bazelbuild/bazelisk/releases/download/v${VERSION_BAZELISK}/bazelisk-linux-amd64 --output /tmp/bazel
           chmod +x /tmp/bazel && echo "::add-path::/tmp/"
 
+      - name: "Configure Bazel"
+        run: cp .github/workflows/.bazelrc .
+
       - name: "Analysis tests"
         run: bazel test //tests/analysis:tests
 
