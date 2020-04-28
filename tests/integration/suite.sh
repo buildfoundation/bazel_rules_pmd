@@ -18,7 +18,7 @@ for STRATEGY in "local"; do
     touch "${GENERATED_CODE_DIR}/${STRATEGY}.java"
 
     for TEST in tests/integration/test_*.sh; do
-        bash $TEST;
+        bash $TEST
     done
 
     rm -rf "${GENERATED_CODE_DIR}"
