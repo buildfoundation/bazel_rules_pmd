@@ -1,8 +1,15 @@
 load("@rules_pmd//pmd:defs.bzl", "pmd")
 
 pmd(
-    name = "sample",
+    name = "pmd_error",
     srcs = glob(["src/main/java/**/*.java"]),
-    report_format = "html",
-    rulesets = ["rulesets.xml"],
+    report_format = "text",
+    rulesets = ["pmd_rulesets_error.xml"],
+)
+
+pmd(
+    name = "pmd_errorless",
+    srcs = glob(["src/main/java/**/*.java"]),
+    report_format = "text",
+    rulesets = ["pmd_rulesets_errorless.xml"],
 )
