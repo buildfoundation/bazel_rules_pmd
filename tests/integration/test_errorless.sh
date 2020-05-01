@@ -1,14 +1,17 @@
 #!/bin/bash
 set -eou pipefail
 
-TARGET="pmd_errorless"
-OUTPUT_DIR="$(bazel info bazel-bin)/tests/integration/"
+readonly TARGET="pmd_errorless"
+readonly OUTPUT_DIR="$(bazel info bazel-bin)/tests/integration"
 
+echo
 echo ":: Target with errorless rulesets does not produce error."
+echo
 
 set +e
 bazel build //tests/integration:${TARGET} > /dev/null
-BAZEL_EXIT_CODE=$?
+
+readonly BAZEL_EXIT_CODE=$?
 set -e
 
 set -x

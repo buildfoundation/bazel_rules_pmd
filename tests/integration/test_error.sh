@@ -1,14 +1,17 @@
 #!/bin/bash
 set -eou pipefail
 
-TARGET="pmd_error"
-OUTPUT_DIR="$(bazel info bazel-bin)/tests/integration/"
+readonly TARGET="pmd_error"
+readonly OUTPUT_DIR="$(bazel info bazel-bin)/tests/integration"
 
+echo
 echo ":: Target with error rulesets produces error."
+echo
 
 set +e
 bazel build //tests/integration:${TARGET} > /dev/null
-BAZEL_EXIT_CODE=$?
+
+readonly BAZEL_EXIT_CODE=$?
 set -e
 
 set -x

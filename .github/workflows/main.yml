@@ -38,7 +38,7 @@ jobs:
           chmod +x /tmp/bazel && echo "::add-path::/tmp/"
 
       - name: "Configure Bazel"
-        run: cp .github/workflows/.bazelrc .
+        run: cat .github/workflows/.bazelrc >> .bazelrc
 
       - name: "Analysis tests"
         run: bazel test //tests/analysis:tests
