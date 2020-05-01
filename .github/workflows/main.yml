@@ -3,15 +3,15 @@ name: CI
 on: [push, pull_request]
 
 env:
-  VERSION_BAZELISK: "1.3.0"
-  VERSION_BUILDIFIER: "2.2.1"
+  VERSION_BAZELISK: "1.4.0"
+  VERSION_BUILDIFIER: "3.0.0"
 
 jobs:
   buildifier:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout the source code"
-        uses: actions/checkout@v2.0.0
+        uses: actions/checkout@v2.1.0
 
       - name: "Download Buildifier"
         run: |

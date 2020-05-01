@@ -51,7 +51,7 @@ def _action_full_contents_test_impl(ctx):
     action_pmd = actions[2]
 
     action_pmd_arguments_expected = _expand_paths(env.ctx, [
-        "bazel-out/host/bin/external/rules_pmd/pmd/pmd",
+        "bazel-out/host/bin/pmd/pmd",
         "-filelist",
         "{{output_dir}}/{{source_dir}}/srcs.txt",
         "-ignorelist",
@@ -83,9 +83,9 @@ def _action_full_contents_test_impl(ctx):
         "{{source_dir}}/path D.kt",
         "{{source_dir}}/path E.kt",
         "{{source_dir}}/rulesets.xml",
-        "bazel-out/host/internal/_middlemen/external_Srules_Upmd_Spmd_Spmd-runfiles",
-        "bazel-out/host/bin/external/rules_pmd/pmd/pmd.jar",
-        "bazel-out/host/bin/external/rules_pmd/pmd/pmd",
+        "bazel-out/host/internal/_middlemen/pmd_Spmd-runfiles",
+        "bazel-out/host/bin/pmd/pmd.jar",
+        "bazel-out/host/bin/pmd/pmd",
     ])
     action_pmd_inputs_actual = [file.path for file in action_pmd.inputs.to_list()]
 
@@ -95,7 +95,7 @@ def _action_full_contents_test_impl(ctx):
     action_pmd_outputs_actual = [file.path for file in action_pmd.outputs.to_list()]
 
     asserts.equals(env, action_pmd_arguments_expected, action_pmd_arguments_actual)
-    asserts.equals(env, action_pmd_inputs_expected, action_pmd_inputs_expected)
+    asserts.equals(env, action_pmd_inputs_expected, action_pmd_inputs_actual)
     asserts.equals(env, action_pmd_outputs_expected, action_pmd_outputs_actual)
 
     return analysistest.end(env)
@@ -144,7 +144,7 @@ def _action_blank_contents_test_impl(ctx):
     action_pmd = actions[1]
 
     action_pmd_arguments_expected = _expand_paths(env.ctx, [
-        "bazel-out/host/bin/external/rules_pmd/pmd/pmd",
+        "bazel-out/host/bin/pmd/pmd",
         "-filelist",
         "{{output_dir}}/{{source_dir}}/srcs.txt",
         "-language",
@@ -169,9 +169,9 @@ def _action_blank_contents_test_impl(ctx):
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
         "{{source_dir}}/rulesets.xml",
-        "bazel-out/host/internal/_middlemen/external_Srules_Upmd_Spmd_Spmd-runfiles",
-        "bazel-out/host/bin/external/rules_pmd/pmd/pmd.jar",
-        "bazel-out/host/bin/external/rules_pmd/pmd/pmd",
+        "bazel-out/host/internal/_middlemen/pmd_Spmd-runfiles",
+        "bazel-out/host/bin/pmd/pmd.jar",
+        "bazel-out/host/bin/pmd/pmd",
     ])
     action_pmd_inputs_actual = [file.path for file in action_pmd.inputs.to_list()]
 
@@ -181,7 +181,7 @@ def _action_blank_contents_test_impl(ctx):
     action_pmd_outputs_actual = [file.path for file in action_pmd.outputs.to_list()]
 
     asserts.equals(env, action_pmd_arguments_expected, action_pmd_arguments_actual)
-    asserts.equals(env, action_pmd_inputs_expected, action_pmd_inputs_expected)
+    asserts.equals(env, action_pmd_inputs_expected, action_pmd_inputs_actual)
     asserts.equals(env, action_pmd_outputs_expected, action_pmd_outputs_actual)
 
     return analysistest.end(env)
