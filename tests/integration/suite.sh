@@ -8,7 +8,7 @@ readonly BAZEL_RC_ORIGINAL=".bazelrc.original"
 
 cp "${BAZEL_RC}" "${BAZEL_RC_ORIGINAL}"
 
-for STRATEGY in "local"; do
+for STRATEGY in "local" "worker"; do
     echo ":: Executing with the [${STRATEGY}] strategy."
 
     cp "${BAZEL_RC_ORIGINAL}" "${BAZEL_RC}"

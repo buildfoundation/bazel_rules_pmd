@@ -8,6 +8,14 @@ def _impl(ctx):
 
     arguments = ctx.actions.args()
 
+    # Arguments are passed in a file. The file path is a special @-named argument.
+    # See https://docs.oracle.com/javase/8/docs/technotes/tools/windows/javac.html#BHCJEIBB
+    # A worker execution replaces the @-argument with the "--persistent_worker" one.
+    # A non-worker execution preserves the argument which is eventually expanded to regular arguments.
+
+    arguments.set_param_file_format("multiline")
+    arguments.use_param_file("@%s", use_always = True)
+
     # Sources
 
     if len(ctx.files.srcs) != 0:
@@ -60,10 +68,14 @@ def _impl(ctx):
 
     ctx.actions.run(
         mnemonic = "PMD",
+        arguments = [arguments],
         executable = ctx.executable._executable,
+        execution_requirements = {
+            "supports-workers": "1",
+            "supports-multiplex-workers": "0",
+        },
         inputs = inputs,
         outputs = outputs,
-        arguments = [arguments],
     )
 
     return [DefaultInfo(files = depset(outputs))]
@@ -86,7 +98,7 @@ pmd = rule(
     implementation = _impl,
     attrs = {
         "_executable": attr.label(
-            default = "//pmd:pmd",
+            default = "//pmd/wrapper:bin",
             executable = True,
             cfg = "host",
         ),
