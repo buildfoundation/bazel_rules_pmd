@@ -29,18 +29,18 @@ def _action_full_contents_test_impl(ctx):
     action_write_file_srcs = actions[0]
 
     action_write_file_srcs_outputs_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs.txt",
+        "{{output_dir}}/{{source_dir}}/srcs_%s.txt" % ctx.label.name,
     ])
     action_write_file_srcs_outputs_actual = [file.path for file in action_write_file_srcs.outputs.to_list()]
 
     asserts.equals(env, action_write_file_srcs_outputs_expected, action_write_file_srcs_outputs_actual)
 
-    # Action: writing file "srcs_ignore.txt"
+    # Action: writing file "srcs_ignore_%s.txt" % ctx.label.name
 
     action_write_file_srcs_ignore = actions[1]
 
     action_write_file_srcs_ignore_ouptuts_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs_ignore.txt",
+        "{{output_dir}}/{{source_dir}}/srcs_ignore_%s.txt" % ctx.label.name,
     ])
     action_write_file_srcs_ignore_ouptuts_actual = [file.path for file in action_write_file_srcs_ignore.outputs.to_list()]
 
@@ -53,9 +53,9 @@ def _action_full_contents_test_impl(ctx):
     action_pmd_arguments_expected = _expand_paths(env.ctx, [
         "bazel-out/host/bin/pmd/pmd",
         "-filelist",
-        "{{output_dir}}/{{source_dir}}/srcs.txt",
+        "{{output_dir}}/{{source_dir}}/srcs_%s.txt" % ctx.label.name,
         "-ignorelist",
-        "{{output_dir}}/{{source_dir}}/srcs_ignore.txt",
+        "{{output_dir}}/{{source_dir}}/srcs_ignore_%s.txt" % ctx.label.name,
         "-language",
         "java",
         "-version",
@@ -75,11 +75,11 @@ def _action_full_contents_test_impl(ctx):
     action_pmd_arguments_actual = action_pmd.argv
 
     action_pmd_inputs_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs.txt",
+        "{{output_dir}}/{{source_dir}}/srcs_%s.txt" % ctx.label.name,
         "{{source_dir}}/path A.kt",
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
-        "{{output_dir}}/{{source_dir}}/srcs_ignore.txt",
+        "{{output_dir}}/{{source_dir}}/srcs_ignore_%s.txt" % ctx.label.name,
         "{{source_dir}}/path D.kt",
         "{{source_dir}}/path E.kt",
         "{{source_dir}}/rulesets.xml",
@@ -133,7 +133,7 @@ def _action_blank_contents_test_impl(ctx):
     action_write_file_srcs = actions[0]
 
     action_write_file_srcs_outputs_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs.txt",
+        "{{output_dir}}/{{source_dir}}/srcs_%s.txt" % ctx.label.name,
     ])
     action_write_file_srcs_outputs_actual = [file.path for file in action_write_file_srcs.outputs.to_list()]
 
@@ -146,7 +146,7 @@ def _action_blank_contents_test_impl(ctx):
     action_pmd_arguments_expected = _expand_paths(env.ctx, [
         "bazel-out/host/bin/pmd/pmd",
         "-filelist",
-        "{{output_dir}}/{{source_dir}}/srcs.txt",
+        "{{output_dir}}/{{source_dir}}/srcs_%s.txt" % ctx.label.name,
         "-language",
         "java",
         "-rulesets",
@@ -164,7 +164,7 @@ def _action_blank_contents_test_impl(ctx):
     action_pmd_arguments_actual = action_pmd.argv
 
     action_pmd_inputs_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs.txt",
+        "{{output_dir}}/{{source_dir}}/srcs_%s.txt" % ctx.label.name,
         "{{source_dir}}/path A.kt",
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
