@@ -15,7 +15,7 @@ def _impl(ctx):
             ctx,
             ctx.files.srcs,
             "srcs_{name}.txt".format(
-                ctx.label.name,
+                name = ctx.label.name,
             ),
         )
 
@@ -29,7 +29,7 @@ def _impl(ctx):
             ctx,
             ctx.files.srcs_ignore,
             "srcs_ignore_{name}.txt".format(
-                ctx.label.name,
+                name = ctx.label.name,
             ),
         )
 
