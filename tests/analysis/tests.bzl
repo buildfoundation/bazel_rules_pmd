@@ -117,6 +117,7 @@ def _test_action_full_contents():
 
     action_full_contents_test(
         name = "action_full_contents_test",
+        size = "small",
         target_under_test = ":test_target_full",
     )
 
@@ -133,7 +134,7 @@ def _action_blank_contents_test_impl(ctx):
     # Action: writing file "srcs.txt"
     #print("name: {}".format(ctx.label.name))
     #print(dir(ctx.attr.target_under_test.label.name))
-    #print("target_under_test: {}".format(ctx.attr.target_under_test.attr.name)) 
+    #print("target_under_test: {}".format(ctx.attr.target_under_test.attr.name))
 
     action_write_file_srcs = actions[0]
 
@@ -202,6 +203,7 @@ def _test_action_blank_contents():
 
     action_blank_contents_test(
         name = "action_blank_contents_test",
+        size = "small",
         target_under_test = ":test_target_blank",
     )
 
