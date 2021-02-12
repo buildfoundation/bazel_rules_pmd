@@ -7,7 +7,7 @@ load("@rules_java//java:repositories.bzl", "rules_java_dependencies", "rules_jav
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 load("@rules_jvm_external//:specs.bzl", "maven")
 
-def rules_pmd_toolchains(pmd_version = "6.23.0"):
+def rules_pmd_toolchains(pmd_version = "6.31.0"):
     """Invokes `rules_pmd` toolchains.
 
     Declares toolchains that are dependencies of the `rules_pmd` workspace.
