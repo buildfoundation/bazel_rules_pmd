@@ -11,31 +11,17 @@ def _impl(ctx):
     # Sources
 
     if len(ctx.files.srcs) != 0:
-        srcs_file = _write_files_list(
-            ctx,
-            ctx.files.srcs,
-            "srcs_{name}.txt".format(
-                name = ctx.label.name,
-            ),
-        )
-
+        srcs_file = _write_files_list(ctx, ctx.files.srcs, "srcs_{}.txt".format(ctx.label.name))
         arguments.add("-filelist", srcs_file)
 
         inputs.append(srcs_file)
         inputs.extend(ctx.files.srcs)
 
     if len(ctx.files.srcs_ignore) != 0:
-        srcs_file = _write_files_list(
-            ctx,
-            ctx.files.srcs_ignore,
-            "srcs_ignore_{name}.txt".format(
-                name = ctx.label.name,
-            ),
-        )
+        srcs_ignore_file = _write_files_list(ctx, ctx.files.srcs, "srcs_ignore_{}.txt".format(ctx.label.name))
+        arguments.add("-ignorelist", srcs_ignore_file)
 
-        arguments.add("-ignorelist", srcs_file)
-
-        inputs.append(srcs_file)
+        inputs.append(srcs_ignore_file)
         inputs.extend(ctx.files.srcs_ignore)
 
     # Language
