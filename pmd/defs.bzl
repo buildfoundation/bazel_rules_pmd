@@ -24,17 +24,21 @@ def _impl(ctx):
         inputs.append(srcs_ignore_file)
         inputs.extend(ctx.files.srcs_ignore)
 
+    arguments.add("-encoding", ctx.attr.srcs_encoding)
+
     # Language
 
-    arguments.add("-language", ctx.attr.language)
+    arguments.add("-language", ctx.attr.srcs_language)
 
-    if len(ctx.attr.language_version) != 0:
-        arguments.add("-version", ctx.attr.language_version)
+    if len(ctx.attr.srcs_language_version) != 0:
+        arguments.add("-version", ctx.attr.srcs_language_version)
 
     # Rules
 
     arguments.add_joined("-rulesets", ctx.files.rulesets, join_with = ",")
     inputs.extend(ctx.files.rulesets)
+
+    arguments.add("-minimumpriority", ctx.attr.rules_minimum_priority)
 
     # Report
 
@@ -76,8 +80,12 @@ def _write_files_list(ctx, files, file_name):
 
 _report_format_extensions = {
     "codeclimate": "json",
+    "csv": "csv",
+    "html": "html",
+    "json": "json",
     "summaryhtml": "html",
     "text": "txt",
+    "xml": "xml",
 }
 
 pmd = rule(
@@ -99,12 +107,16 @@ pmd = rule(
             default = [],
             doc = "Source code files to ignore.",
         ),
-        "language": attr.string(
+        "srcs_encoding": attr.string(
+            default = "UTF-8",
+            doc = "See [PMD `-encoding` option](https://pmd.github.io/latest/pmd_userdocs_cli_reference.html)",
+        ),
+        "srcs_language": attr.string(
             default = "java",
-            values = ["ecmascript", "java"],
+            values = ["apex", "ecmascript", "java", "jsp", "modelica", "plsql", "scala", "vf", "vm", "xml"],
             doc = "See [PMD `-language` option](https://pmd.github.io/latest/pmd_userdocs_cli_reference.html)",
         ),
-        "language_version": attr.string(
+        "srcs_language_version": attr.string(
             doc = "See [PMD `-version` option](https://pmd.github.io/latest/pmd_userdocs_cli_reference.html)",
         ),
         "rulesets": attr.label_list(
@@ -113,9 +125,13 @@ pmd = rule(
             allow_empty = False,
             doc = "Ruleset files.",
         ),
+        "rules_minimum_priority": attr.int(
+            default = 5,
+            doc = "See [PMD `-minimumpriority` option](https://pmd.github.io/latest/pmd_userdocs_cli_reference.html)",
+        ),
         "report_format": attr.string(
             default = "text",
-            values = ["codeclimate", "csv", "html", "summaryhtml", "text", "xml"],
+            values = ["codeclimate", "csv", "json", "html", "summaryhtml", "text", "xml"],
             doc = "See [PMD `-format` option](https://pmd.github.io/latest/pmd_userdocs_cli_reference.html)",
         ),
         "fail_on_violation": attr.bool(
