@@ -92,7 +92,7 @@ pmd = rule(
     implementation = _impl,
     attrs = {
         "_executable": attr.label(
-            default = "//pmd:pmd",
+            default = "//pmd/wrapper:bin",
             executable = True,
             cfg = "host",
         ),
@@ -131,7 +131,7 @@ pmd = rule(
         ),
         "report_format": attr.string(
             default = "text",
-            values = ["codeclimate", "csv", "json", "html", "summaryhtml", "text", "xml"],
+            values = ["codeclimate", "csv", "json", "html", "summaryhtml", "text", "textcolor", "textpad", "xml"],
             doc = "See [PMD `-format` option](https://pmd.github.io/latest/pmd_userdocs_cli_reference.html)",
         ),
         "fail_on_violation": attr.bool(
