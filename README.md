@@ -7,6 +7,9 @@ for [the Bazel build system](https://bazel.build).
 
 ### `WORKSPACE` Configuration
 
+Declare the rule in the `WORKSPACE` file.
+Please refer to [GitHub releases](https://github.com/buildfoundation/bazel_rules_pmd/releases) for the version and the SHA-256 hashsum.
+
 ```starlark
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
@@ -29,6 +32,8 @@ rules_pmd_toolchains()
 
 ### `BUILD` Configuration
 
+Once declared in the `WORSKPACE` file, the rule can be loaded in the `BUILD` file.
+
 ```starlark
 load("@rules_pmd//pmd:defs.bzl", "pmd")
 
@@ -37,6 +42,8 @@ pmd(
     srcs = glob(["src/main/java/**/*.java"]),
 )
 ```
+
+See [available attributes](docs/rule.md).
 
 ### Execution
 
