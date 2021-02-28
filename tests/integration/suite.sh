@@ -10,7 +10,6 @@ cp "${BAZEL_RC}" "${BAZEL_RC_ORIGINAL}"
 
 for STRATEGY in "local"; do
     echo ":: Executing with the [${STRATEGY}] strategy."
-
     cp "${BAZEL_RC_ORIGINAL}" "${BAZEL_RC}"
     echo "build --strategy=PMD=${STRATEGY}" >> "${BAZEL_RC}"
 

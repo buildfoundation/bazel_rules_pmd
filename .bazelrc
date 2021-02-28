@@ -1,2 +1,0 @@
-build --verbose_failures
-build --worker_verbose

@@ -39,11 +39,16 @@ jobs:
           chmod +x /tmp/bazel && echo "/tmp" >> $GITHUB_PATH
 
       - name: "Configure Bazel"
-        run: cat .github/workflows/.bazelrc >> .bazelrc
+        run: cp .github/workflows/.bazelrc .
+
+      - name: "Fetch"
+        run: bazel fetch //pmd/wrapper:bin
+
+      - name: "Build"
+        run: bazel build //pmd/wrapper:bin
 
       - name: "Analysis tests"
         run: bazel test //tests/analysis:tests
 
       - name: "Integration tests"
         run: bash tests/integration/suite.sh
-
