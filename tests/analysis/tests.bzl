@@ -51,7 +51,7 @@ def _action_full_contents_test_impl(ctx):
     action_pmd = actions[2]
 
     action_pmd_arguments_expected = _expand_paths(env.ctx, [
-        "bazel-out/host/bin/pmd/pmd",
+        "bazel-out/host/bin/pmd/wrapper/bin",
         "-filelist",
         "{{output_dir}}/{{source_dir}}/srcs_test_target_full.txt",
         "-ignorelist",
@@ -87,9 +87,9 @@ def _action_full_contents_test_impl(ctx):
         "{{source_dir}}/path D.kt",
         "{{source_dir}}/path E.kt",
         "{{source_dir}}/rulesets.xml",
-        "bazel-out/host/internal/_middlemen/pmd_Spmd-runfiles",
-        "bazel-out/host/bin/pmd/pmd.jar",
-        "bazel-out/host/bin/pmd/pmd",
+        "bazel-out/host/internal/_middlemen/pmd_Swrapper_Sbin-runfiles",
+        "bazel-out/host/bin/pmd/wrapper/bin.jar",
+        "bazel-out/host/bin/pmd/wrapper/bin",
     ])
     action_pmd_inputs_actual = [file.path for file in action_pmd.inputs.to_list()]
 
@@ -149,7 +149,7 @@ def _action_blank_contents_test_impl(ctx):
     action_pmd = actions[1]
 
     action_pmd_arguments_expected = _expand_paths(env.ctx, [
-        "bazel-out/host/bin/pmd/pmd",
+        "bazel-out/host/bin/pmd/wrapper/bin",
         "-filelist",
         "{{output_dir}}/{{source_dir}}/srcs_test_target_blank.txt",
         "-encoding",
@@ -178,9 +178,9 @@ def _action_blank_contents_test_impl(ctx):
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
         "{{source_dir}}/rulesets.xml",
-        "bazel-out/host/internal/_middlemen/pmd_Spmd-runfiles",
-        "bazel-out/host/bin/pmd/pmd.jar",
-        "bazel-out/host/bin/pmd/pmd",
+        "bazel-out/host/internal/_middlemen/pmd_Swrapper_Sbin-runfiles",
+        "bazel-out/host/bin/pmd/wrapper/bin.jar",
+        "bazel-out/host/bin/pmd/wrapper/bin",
     ])
     action_pmd_inputs_actual = [file.path for file in action_pmd.inputs.to_list()]
 
