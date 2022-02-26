@@ -22,13 +22,14 @@ def rules_pmd_dependencies():
         repo_rule = http_archive,
         name = "rules_java",
         url = "https://github.com/bazelbuild/rules_java/releases/download/{v}/rules_java-{v}.tar.gz".format(v = rules_java_version),
+        strip_prefix = "rules_java-{v}".format(v = rules_java_version),
         sha256 = rules_java_sha,
     )
 
     # JVM External
 
     rules_jvm_external_version = "4.2"
-    rules_jvm_external_sha = "cd1a77b7b02e8e008439ca76fd34f5b07aecb8c752961f9640dea15e9e5ba1ca"
+    rules_jvm_external_sha = "2cd77de091e5376afaf9cc391c15f093ebd0105192373b334f0a855d89092ad5"
 
     maybe(
         repo_rule = http_archive,
