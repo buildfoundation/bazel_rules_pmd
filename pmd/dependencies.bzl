@@ -21,7 +21,7 @@ def rules_pmd_dependencies():
     maybe(
         repo_rule = http_archive,
         name = "rules_java",
-        url = "https://github.com/bazelbuild/rules_java/releases/download/{v}/rules_java-{v}.tar.gz".format(v = rules_java_version),
+        url = "https://github.com/bazelbuild/rules_java/archive/refs/tags/{v}.tar.gz".format(v = rules_java_version),
         strip_prefix = "rules_java-{v}".format(v = rules_java_version),
         sha256 = rules_java_sha,
     )
