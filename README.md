@@ -30,6 +30,23 @@ load("@rules_pmd//pmd:toolchains.bzl", "rules_pmd_toolchains")
 rules_pmd_toolchains()
 ```
 
+### Using a custom version of PMD
+
+Building on the default WORKSPACE configuration, you can use the `version` macro to define a custom PMD version to supply. 
+
+PMD bin releases are downloaded from [https://github.com/pmd/pmd/releases](https://github.com/pmd/pmd/releases).
+
+Example:
+
+```starlark
+
+load("@rules_pmd//pmd:dependencies.bzl", "rules_pmd_dependencies", "pmd_version")
+rules_pmd_dependencies(pmd_release = pmd_version(version = "6.44.0", sha256 = "7e6dceba88529a90b2b33c8f05b53bc409fa9eab79be592c875f6bd996aaade7"))
+
+load("@rules_pmd//pmd:toolchains.bzl", "rules_pmd_toolchains")
+rules_pmd_toolchains()
+```
+
 ### `BUILD` Configuration
 
 Once declared in the `WORSKPACE` file, the rule can be loaded in the `BUILD` file.

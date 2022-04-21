@@ -4,8 +4,7 @@ java_library(
     name = "wrapper",
     srcs = glob(["src/main/java/**/*.java"]),
     deps = [
-        "@rules_pmd_dependencies//:net_sourceforge_pmd_pmd_core",
-        "@rules_pmd_dependencies//:net_sourceforge_pmd_pmd_dist",
+        "@rules_pmd_dependencies//:net_sourceforge_pmd",
     ],
 )
 

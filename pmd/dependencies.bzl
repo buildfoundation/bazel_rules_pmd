@@ -6,11 +6,25 @@ See https://docs.bazel.build/versions/master/skylark/deploying.html#dependencies
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
-def rules_pmd_dependencies():
+def pmd_version(version, sha256):
+    return struct(
+        version = version,
+        sha256 = sha256,
+    )
+
+_DEFAULT_PMD_RELEASE = pmd_version(
+    version = "6.44.0",
+    sha256 = "7e6dceba88529a90b2b33c8f05b53bc409fa9eab79be592c875f6bd996aaade7",
+)
+
+def rules_pmd_dependencies(pmd_release = _DEFAULT_PMD_RELEASE):
     """Fetches `rules_pmd` dependencies.
 
     Declares dependencies of the `rules_pmd` workspace.
     Users should call this macro in their `WORKSPACE` file.
+
+    Args:
+        pmd_release: Versioning information for the PMD release to use
     """
 
     # Java
@@ -26,15 +40,19 @@ def rules_pmd_dependencies():
         sha256 = rules_java_sha,
     )
 
-    # JVM External
-
-    rules_jvm_external_version = "4.2"
-    rules_jvm_external_sha = "2cd77de091e5376afaf9cc391c15f093ebd0105192373b334f0a855d89092ad5"
-
     maybe(
         repo_rule = http_archive,
-        name = "rules_jvm_external",
-        url = "https://github.com/bazelbuild/rules_jvm_external/archive/{v}.tar.gz".format(v = rules_jvm_external_version),
-        strip_prefix = "rules_jvm_external-{v}".format(v = rules_jvm_external_version),
-        sha256 = rules_jvm_external_sha,
+        name = "rules_pmd_dependencies",
+        url = "https://github.com/pmd/pmd/releases/download/pmd_releases/{v}/pmd-bin-{v}.zip".format(v = pmd_release.version),
+        strip_prefix = "pmd-bin-{v}".format(v = pmd_release.version),
+        sha256 = pmd_release.sha256,
+        build_file_content = """
+load("@rules_java//java:defs.bzl", "java_import")
+
+java_import(
+    name = "net_sourceforge_pmd",
+    jars = glob(["lib/*.jar"]),
+    visibility = ["//visibility:public"],
+)
+        """,
     )
