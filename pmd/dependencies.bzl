@@ -28,8 +28,8 @@ def rules_pmd_dependencies():
 
     # JVM External
 
-    rules_jvm_external_version = "4.2"
-    rules_jvm_external_sha = "2cd77de091e5376afaf9cc391c15f093ebd0105192373b334f0a855d89092ad5"
+    rules_jvm_external_version = "4.4.2"
+    rules_jvm_external_sha = "735602f50813eb2ea93ca3f5e43b1959bd80b213b836a07a62a29d757670b77b"
 
     maybe(
         repo_rule = http_archive,
