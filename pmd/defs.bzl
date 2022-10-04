@@ -12,19 +12,19 @@ def _impl(ctx):
 
     if len(ctx.files.srcs) != 0:
         srcs_file = _write_files_list(ctx, ctx.files.srcs, "srcs_{}.txt".format(ctx.label.name))
-        arguments.add("-filelist", srcs_file)
+        arguments.add("--file-list", srcs_file)
 
         inputs.append(srcs_file)
         inputs.extend(ctx.files.srcs)
 
     if len(ctx.files.srcs_ignore) != 0:
         srcs_ignore_file = _write_files_list(ctx, ctx.files.srcs, "srcs_ignore_{}.txt".format(ctx.label.name))
-        arguments.add("-ignorelist", srcs_ignore_file)
+        arguments.add("--ignore-list", srcs_ignore_file)
 
         inputs.append(srcs_ignore_file)
         inputs.extend(ctx.files.srcs_ignore)
 
-    arguments.add("-encoding", ctx.attr.srcs_encoding)
+    arguments.add("--encoding", ctx.attr.srcs_encoding)
 
     # Language
 
@@ -35,10 +35,10 @@ def _impl(ctx):
 
     # Rules
 
-    arguments.add_joined("-R", ctx.files.rulesets, join_with = ",")
+    arguments.add_joined("--rulesets", ctx.files.rulesets, join_with = ",")
     inputs.extend(ctx.files.rulesets)
 
-    arguments.add("-minimumpriority", ctx.attr.rules_minimum_priority)
+    arguments.add("--minimum-priority", ctx.attr.rules_minimum_priority)
 
     # Report
 
@@ -47,16 +47,16 @@ def _impl(ctx):
         extension = _report_format_extensions.get(ctx.attr.report_format, default = ctx.attr.report_format),
     ))
 
-    arguments.add("-format", ctx.attr.report_format)
-    arguments.add("-reportfile", report_file)
+    arguments.add("--format", ctx.attr.report_format)
+    arguments.add("--report-file", report_file)
 
     outputs.append(report_file)
 
     # Remaining options
 
-    arguments.add("-failOnViolation", ctx.attr.fail_on_violation)
-    arguments.add("-no-cache")
-    arguments.add("-threads", ctx.attr.threads_count)
+    arguments.add("--fail-on-violation", ctx.attr.fail_on_violation)
+    arguments.add("--no-cache")
+    arguments.add("--threads", ctx.attr.threads_count)
 
     # Run
 
