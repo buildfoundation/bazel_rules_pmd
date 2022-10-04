@@ -35,7 +35,7 @@ def _impl(ctx):
 
     # Rules
 
-    arguments.add_joined("-rulesets", ctx.files.rulesets, join_with = ",")
+    arguments.add_joined("-R", ctx.files.rulesets, join_with = ",")
     inputs.extend(ctx.files.rulesets)
 
     arguments.add("-minimumpriority", ctx.attr.rules_minimum_priority)
