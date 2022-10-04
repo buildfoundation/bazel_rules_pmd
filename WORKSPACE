@@ -38,9 +38,9 @@ bazel_skylib_workspace()
 
 ## Stardoc
 
-stardoc_version = "0.4.0"
+stardoc_version = "0.5.3"
 
-stardoc_sha = "6d07d18c15abb0f6d393adbd6075cd661a2219faab56a9517741f0fc755f6f3c"
+stardoc_sha = "3fd8fec4ddec3c670bd810904e2e33170bedfe12f90adf943508184be458c8bb"
 
 http_archive(
     name = "io_bazel_stardoc",
