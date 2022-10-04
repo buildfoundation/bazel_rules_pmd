@@ -3,10 +3,6 @@ name: CI
 on:
   pull_request:
 
-env:
-  VERSION_BAZELISK: "1.7.4"
-  VERSION_BUILDIFIER: "4.0.0"
-
 jobs:
   buildifier:
     runs-on: ubuntu-latest
