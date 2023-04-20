@@ -14,13 +14,13 @@ import java.util.List;
 public final class Main {
 
     public static void main(String[] args) {
-        int result = PMD.run(args);
+        PMD.StatusCode result = PMD.runPmd(args);
 
-        if (result != 0) {
+        if (!result.equals(PMD.StatusCode.OK)) {
             printError(args);
         }
 
-        System.exit(result);
+        System.exit(result.toInt());
     }
 
     private static void printError(String[] args) {
