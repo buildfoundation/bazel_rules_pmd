@@ -55,14 +55,9 @@ public final class Main {
      * Writes the execution result to a file, using the appropriate exit command based on the operating system.
      */
     private static void writeExecutionResultToFile(PMD.StatusCode statusCode, String executionResultOutputPath) {
-        String os = System.getProperty("os.name").toLowerCase();
         String content;
 
-        if (os.contains("win")) {
-            content = String.format("exit /b %d", statusCode.toInt());
-        } else {
-            content = String.format("#!/bin/bash\n\nexit %d\n", statusCode.toInt());
-        }
+        content = String.format("#!/bin/bash\n\nexit %d\n", statusCode.toInt());
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(executionResultOutputPath))) {
             writer.write(content);

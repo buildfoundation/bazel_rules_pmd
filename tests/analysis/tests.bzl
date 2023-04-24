@@ -121,7 +121,6 @@ def _test_action_full_contents():
         report_format = "html",
         fail_on_violation = False,
         threads_count = 42,
-        is_windows = False,
     )
 
     action_full_contents_test(
@@ -209,7 +208,6 @@ def _test_action_blank_contents():
         name = "test_target_blank",
         srcs = ["path A.kt", "path B.kt", "path C.kt"],
         rulesets = ["rulesets.xml"],
-        is_windows = False,
     )
 
     action_blank_contents_test(
