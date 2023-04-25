@@ -85,7 +85,7 @@ public final class Main {
     /**
      * Filters out specified arguments and their corresponding values from the input argument list.
      */
-    public static String[] filterOutArgValuePairs(List<String> args, Set<String> excludeArgs) {
+    public static List<String> filterOutArgValuePairs(List<String> args, Set<String> excludeArgs) {
         List<String> filteredList = new ArrayList<>();
 
         int index = 0;
