@@ -22,9 +22,9 @@ public final class Main {
         List<String> inputArgs = Arrays.asList(args);
         String executionResultOutputPath = getExecutionResultOutputPath(inputArgs);
 
-        String[] pmdArgs = sanitizePmdArguments(inputArgs);
+        List<String> pmdArgs = sanitizePmdArguments(inputArgs);
 
-        PMD.StatusCode result = PMD.runPmd(pmdArgs);
+        PMD.StatusCode result = PMD.runPmd(pmdArgs.toArray(new String[0]));
 
         if (!result.equals(PMD.StatusCode.OK)) {
             printError(pmdArgs);
@@ -38,10 +38,9 @@ public final class Main {
     /**
      * Prints the error report to the console if the specified report format and file path are provided.
      */
-    private static void printError(String[] pmdArgs) {
-        List<String> pmdArguments = Arrays.asList(pmdArgs);
-        String reportFormat = getArgument(pmdArguments, "--format");
-        String reportFilePath = getArgument(pmdArguments, "--report-file");
+    private static void printError(List<String> pmdArgs) {
+        String reportFormat = getArgument(pmdArgs, "--format");
+        String reportFilePath = getArgument(pmdArgs, "--report-file");
 
         if (reportFormat != null && reportFilePath != null) {
             List<String> supportedFormats = Arrays.asList(TextRenderer.NAME, TextColorRenderer.NAME, TextPadRenderer.NAME);
@@ -78,7 +77,7 @@ public final class Main {
      * Sanitizes PMD arguments by removing unsupported arguments from the input arguments.
      */
     private static List<String> sanitizePmdArguments(List<String> inputArgs) {
-        Set<String> excludeArgs = Collections.singleton("--execution-result"));
+        Set<String> excludeArgs = Collections.singleton("--execution-result");
         return filterOutArgValuePairs(inputArgs, excludeArgs);
     }
 
