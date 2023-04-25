@@ -3,7 +3,7 @@ The rule analysis tests.
 """
 
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
-load("@rules_pmd//pmd:defs.bzl", "pmd")
+load("@rules_pmd//pmd:defs.bzl", "pmd_test")
 
 def _expand_paths(ctx, values):
     source_dir = ctx.build_file_path.replace("/BUILD", "")
@@ -22,7 +22,7 @@ def _action_full_contents_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = analysistest.target_actions(env)
-    asserts.equals(env, 3, len(actions))
+    asserts.equals(env, 7, len(actions))
 
     # Action: writing file "srcs.txt"
 
@@ -75,6 +75,8 @@ def _action_full_contents_test_impl(ctx):
         "--no-cache",
         "--threads",
         "42",
+        "--execution-result",
+        "{{output_dir}}/{{source_dir}}/test_target_full_execution_result.sh",
     ])
     action_pmd_arguments_actual = action_pmd.argv
 
@@ -95,6 +97,7 @@ def _action_full_contents_test_impl(ctx):
 
     action_pmd_outputs_expected = _expand_paths(env.ctx, [
         "{{output_dir}}/{{source_dir}}/test_target_full_pmd_report.html",
+        "{{output_dir}}/{{source_dir}}/test_target_full_execution_result.sh",
     ])
     action_pmd_outputs_actual = [file.path for file in action_pmd.outputs.to_list()]
 
@@ -107,7 +110,7 @@ def _action_full_contents_test_impl(ctx):
 action_full_contents_test = analysistest.make(_action_full_contents_test_impl)
 
 def _test_action_full_contents():
-    pmd(
+    pmd_test(
         name = "test_target_full",
         srcs = ["path A.kt", "path B.kt", "path C.kt"],
         srcs_ignore = ["path D.kt", "path E.kt"],
@@ -131,7 +134,7 @@ def _action_blank_contents_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = analysistest.target_actions(env)
-    asserts.equals(env, 2, len(actions))
+    asserts.equals(env, 6, len(actions))
 
     # Action: writing file "srcs.txt"
 
@@ -169,6 +172,8 @@ def _action_blank_contents_test_impl(ctx):
         "--no-cache",
         "--threads",
         "1",
+        "--execution-result",
+        "{{output_dir}}/{{source_dir}}/test_target_blank_execution_result.sh",
     ])
     action_pmd_arguments_actual = action_pmd.argv
 
@@ -186,6 +191,7 @@ def _action_blank_contents_test_impl(ctx):
 
     action_pmd_outputs_expected = _expand_paths(env.ctx, [
         "{{output_dir}}/{{source_dir}}/test_target_blank_pmd_report.txt",
+        "{{output_dir}}/{{source_dir}}/test_target_blank_execution_result.sh",
     ])
     action_pmd_outputs_actual = [file.path for file in action_pmd.outputs.to_list()]
 
@@ -198,7 +204,7 @@ def _action_blank_contents_test_impl(ctx):
 action_blank_contents_test = analysistest.make(_action_blank_contents_test_impl)
 
 def _test_action_blank_contents():
-    pmd(
+    pmd_test(
         name = "test_target_blank",
         srcs = ["path A.kt", "path B.kt", "path C.kt"],
         rulesets = ["rulesets.xml"],

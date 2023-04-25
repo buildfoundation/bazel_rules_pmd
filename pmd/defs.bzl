@@ -58,6 +58,12 @@ def _impl(ctx):
     arguments.add("--no-cache")
     arguments.add("--threads", ctx.attr.threads_count)
 
+    # Execution-result config
+    # inspired by https://github.com/bazelbuild/bazel-skylib/blob/a360c42f3d7c7697c8521ed831ebf94ff4120451/rules/build_test.bzl#L21
+    execution_result = ctx.actions.declare_file("{}_execution_result.sh".format(ctx.label.name))
+    outputs.append(execution_result)
+    arguments.add("--execution-result", "{}".format(execution_result.path))
+
     # Run
 
     ctx.actions.run(
@@ -68,7 +74,12 @@ def _impl(ctx):
         arguments = [arguments],
     )
 
-    return [DefaultInfo(files = depset(outputs))]
+    return [
+        DefaultInfo(
+            files = depset(outputs),
+            executable = execution_result,
+        )
+    ]
 
 def _write_files_list(ctx, files, file_name):
     file = ctx.actions.declare_file(file_name)
@@ -88,7 +99,7 @@ _report_format_extensions = {
     "xml": "xml",
 }
 
-pmd = rule(
+pmd_test = rule(
     implementation = _impl,
     attrs = {
         "_executable": attr.label(
@@ -144,4 +155,12 @@ pmd = rule(
         ),
     },
     provides = [DefaultInfo],
+    test = True,
 )
+
+def pmd_test_target(name, srcs, **kwargs):
+    pmd_test(
+        name = name + "_pmd_test",
+        srcs = srcs,
+        **kwargs,
+    )
