@@ -101,7 +101,7 @@ public final class Main {
             index += 1;
         }
 
-        return filteredList.toArray(new String[0]);
+        return filteredList;
     }
 
     /**
