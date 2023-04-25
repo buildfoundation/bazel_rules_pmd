@@ -55,14 +55,11 @@ public final class Main {
      * Writes the execution result to a file
      */
     private static void writeExecutionResultToFile(PMD.StatusCode statusCode, String executionResultOutputPath) {
-        String content;
-
-        content = String.format("#!/bin/bash\n\nexit %d\n", statusCode.toInt());
-
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(executionResultOutputPath))) {
-            writer.write(content);
+            writer.write(String.format("#!/bin/bash\n\nexit %d\n", statusCode.toInt()));
         } catch (IOException e) {
             e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 

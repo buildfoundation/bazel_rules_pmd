@@ -59,6 +59,7 @@ def _impl(ctx):
     arguments.add("--threads", ctx.attr.threads_count)
 
     # Execution-result config
+    # inspired by https://github.com/bazelbuild/bazel-skylib/blob/a360c42f3d7c7697c8521ed831ebf94ff4120451/rules/build_test.bzl#L21
     execution_result = ctx.actions.declare_file("{}_execution_result.sh".format(ctx.label.name))
     outputs.append(execution_result)
     arguments.add("--execution-result", "{}".format(execution_result.path))
