@@ -16,7 +16,7 @@ set -e
 
 set -x
 
-test ${BAZEL_EXIT_CODE} = 0
+test ${BAZEL_EXIT_CODE} = 3
 
 test -f "${OUTPUT_DIR}/${TARGET}_pmd_report.txt"
 test -f "${OUTPUT_DIR}/${TARGET}_execution_result.sh"
