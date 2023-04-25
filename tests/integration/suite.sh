@@ -11,7 +11,7 @@ cp "${BAZEL_RC}" "${BAZEL_RC_ORIGINAL}"
 for STRATEGY in "local"; do
     echo ":: Executing with the [${STRATEGY}] strategy."
     cp "${BAZEL_RC_ORIGINAL}" "${BAZEL_RC}"
-    echo "build --strategy=PMD=${STRATEGY}" >> "${BAZEL_RC}"
+    echo "test --strategy=PMD=${STRATEGY}" >> "${BAZEL_RC}"
 
     # Generate a bit of code to keep Bazel working instead of pulling from cache to check strategies execution.
     rm -rf "${GENERATED_CODE_DIR}" && mkdir -p "${GENERATED_CODE_DIR}"
