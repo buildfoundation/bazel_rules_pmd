@@ -78,7 +78,7 @@ public final class Main {
      * Sanitizes PMD arguments by removing unsupported arguments from the input arguments.
      */
     private static String[] sanitizePmdArguments(List<String> inputArgs) {
-        Set<String> excludeArgs = new HashSet<>(Collections.singletonList("--execution-result"));
+        Set<String> excludeArgs = Collections.singleton("--execution-result"));
         return filterOutArgValuePairs(inputArgs, excludeArgs);
     }
 
