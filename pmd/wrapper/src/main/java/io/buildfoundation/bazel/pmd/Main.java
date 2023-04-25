@@ -52,7 +52,7 @@ public final class Main {
     }
 
     /**
-     * Writes the execution result to a file, using the appropriate exit command based on the operating system.
+     * Writes the execution result to a file
      */
     private static void writeExecutionResultToFile(PMD.StatusCode statusCode, String executionResultOutputPath) {
         String content;
