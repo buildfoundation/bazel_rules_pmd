@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eou pipefail
 
-readonly TARGET="pmd_errorless_pmd_test"
+readonly TARGET="pmd_errorless_test"
 readonly OUTPUT_DIR="$(bazel info bazel-bin)/tests/integration"
 
 echo
