@@ -78,7 +78,7 @@ def _impl(ctx):
         DefaultInfo(
             files = depset(outputs),
             executable = execution_result,
-        )
+        ),
     ]
 
 def _write_files_list(ctx, files, file_name):
@@ -162,5 +162,5 @@ def pmd_test_target(name, srcs, **kwargs):
     pmd_test(
         name = name + "_pmd_test",
         srcs = srcs,
-        **kwargs,
+        **kwargs
     )

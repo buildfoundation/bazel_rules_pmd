@@ -1,5 +1,9 @@
 <!-- Generated with Stardoc: http://skydoc.bazel.build -->
 
+
+PMD rule source code.
+
+
 # Attributes
 
 Name           | Type                               | Default            | Description
@@ -15,3 +19,25 @@ Name           | Type                               | Default            | Descr
 `srcs_language` | [`string`](https://docs.bazel.build/versions/master/skylark/lib/string.html) | `"java"` | See [PMD `-language` option](https://pmd.github.io/latest/pmd_userdocs_cli_reference.html)
 `srcs_language_version` | [`string`](https://docs.bazel.build/versions/master/skylark/lib/string.html) | `""` | See [PMD `-version` option](https://pmd.github.io/latest/pmd_userdocs_cli_reference.html)
 `threads_count` | [`int`](https://docs.bazel.build/versions/master/skylark/lib/int.html) | `1` | See [PMD `-threads` option](https://pmd.github.io/latest/pmd_userdocs_cli_reference.html)
+
+
+<a id="pmd_test_target"></a>
+
+## pmd_test_target
+
+<pre>
+pmd_test_target(<a href="#pmd_test_target-name">name</a>, <a href="#pmd_test_target-srcs">srcs</a>, <a href="#pmd_test_target-kwargs">kwargs</a>)
+</pre>
+
+
+
+**PARAMETERS**
+
+
+| Name  | Description | Default Value |
+| :------------- | :------------- | :------------- |
+| <a id="pmd_test_target-name"></a>name |  <p align="center"> - </p>   |  none |
+| <a id="pmd_test_target-srcs"></a>srcs |  <p align="center"> - </p>   |  none |
+| <a id="pmd_test_target-kwargs"></a>kwargs |  <p align="center"> - </p>   |  none |
+
+

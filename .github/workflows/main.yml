@@ -31,13 +31,15 @@ jobs:
           java-version: "11"
       - name: "Setup Bazelisk"
         uses: bazelbuild/setup-bazelisk@v2
-      - name: "Configure Bazel"
-        run: cp .github/workflows/.bazelrc .
-      - name: "Fetch"
-        run: bazel fetch //pmd/wrapper:bin
       - name: "Build"
-        run: bazel build //pmd/wrapper:bin
+        run: |
+          bazel build //pmd/wrapper:bin
+          bazel build //pmd/wrapper:bin --enable_bzlmod=false
       - name: "Analysis tests"
-        run: bazel test //tests/analysis:tests
+        run: |
+          bazel test //tests/analysis:tests
+          bazel test //tests/analysis:tests --enable_bzlmod=false
       - name: "Integration tests"
-        run: bash tests/integration/suite.sh
+        run: |
+          bash tests/integration/suite.sh
+          bash tests/integration/suite.sh --enable_bzlmod=false         

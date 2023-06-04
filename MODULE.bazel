@@ -1,0 +1,14 @@
+module(
+    name = "rules_pmd",
+    version = "0.3.0",
+    bazel_compatibility = [">=6.0.0"],
+    compatibility_level = 1,
+)
+
+pmd_repository_extensions = use_extension("//pmd:extensions.bzl", "pmd_repository_extensions")
+use_repo(pmd_repository_extensions, "net_sourceforge_pmd")
+
+bazel_dep(name = "rules_java", version = "6.0.0")
+bazel_dep(name = "stardoc", version = "0.5.6", dev_dependency = True)
+bazel_dep(name = "bazel_skylib", version = "1.4.2", dev_dependency = True)
+bazel_dep(name = "buildifier_prebuilt", version = "6.1.0", dev_dependency = True)

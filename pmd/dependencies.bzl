@@ -5,36 +5,42 @@ See https://docs.bazel.build/versions/master/skylark/deploying.html#dependencies
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
+load(":versions.bzl", "PMD_RELEASE")
 
-def rules_pmd_dependencies():
+def rules_pmd_dependencies(pmd_release = PMD_RELEASE):
     """Fetches `rules_pmd` dependencies.
 
     Declares dependencies of the `rules_pmd` workspace.
     Users should call this macro in their `WORKSPACE` file.
+
+    Args:
+        pmd_release: A `pmd_release` struct containing the version and sha256 of the
+            PMD bin release associated with the Github release.
     """
+    _rules_pmd_dependencies()
+    _rules_pmd_bzlmod_dependencies(pmd_release = pmd_release)
 
-    # Java
-
-    rules_java_version = "5.0.0"
-    rules_java_sha = "ddc9e11f4836265fea905d2845ac1d04ebad12a255f791ef7fd648d1d2215a5b"
-
+def _rules_pmd_dependencies():
+    """Fetches `rules_pmd` dependencies. This can be dropped once we deprecate WORKSPACE
+    and switch fully to Bzlmod.
+    """
     maybe(
         repo_rule = http_archive,
         name = "rules_java",
-        url = "https://github.com/bazelbuild/rules_java/archive/refs/tags/{v}.tar.gz".format(v = rules_java_version),
-        strip_prefix = "rules_java-{v}".format(v = rules_java_version),
-        sha256 = rules_java_sha,
+        url = "https://github.com/bazelbuild/rules_java/releases/download/6.0.0/rules_java-6.0.0.tar.gz",
+        sha256 = "469b7f3b580b4fcf8112f4d6d0d5a4ce8e1ad5e21fee67d8e8335d5f8b3debab",
     )
 
-    # JVM External
-
-    rules_jvm_external_version = "4.4.2"
-    rules_jvm_external_sha = "9004ff5980b3eac3b00041078a7b0abf5d75d30497fbde2c432a838281e22860"
-
+def _rules_pmd_bzlmod_dependencies(pmd_release):
+    """Fetches `rules_pmd` dependencies that are specific to Bzlmod.
+    """
+    if not pmd_release:
+        fail("Error: Please provide `pmd_release` when calling rules_pmd_dependencies")
     maybe(
         repo_rule = http_archive,
-        name = "rules_jvm_external",
-        url = "https://github.com/bazelbuild/rules_jvm_external/archive/{v}.tar.gz".format(v = rules_jvm_external_version),
-        strip_prefix = "rules_jvm_external-{v}".format(v = rules_jvm_external_version),
-        sha256 = rules_jvm_external_sha,
+        name = "net_sourceforge_pmd",
+        url = "https://github.com/pmd/pmd/releases/download/pmd_releases/{v}/pmd-bin-{v}.zip".format(v = pmd_release.version),
+        strip_prefix = "pmd-bin-{v}/lib".format(v = pmd_release.version),
+        sha256 = pmd_release.sha256,
+        build_file = "//pmd:BUILD.pmd.bazel",
     )

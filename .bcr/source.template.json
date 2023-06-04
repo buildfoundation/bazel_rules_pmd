@@ -1,0 +1,5 @@
+{
+  "integrity": "",
+  "strip_prefix": "bazel_rules_pmd-{TAG}",
+  "url": "https://github.com/buildfoundation/bazel_rules_pmd/archive/refs/tags/{TAG}.tar.gz"
+}
