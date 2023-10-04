@@ -10,9 +10,6 @@ def rules_pmd_toolchains():
 
     Declares toolchains that are dependencies of the `rules_pmd` workspace.
     Users should call this macro in their `WORKSPACE` file.
-
-    Args:
-        pmd_version: "net.sourceforge.pmd:pmd-dist" version used by rules.
     """
 
     rules_java_dependencies()
