@@ -5,6 +5,14 @@ for [the Bazel build system](https://bazel.build).
 
 ## Usage
 
+
+
+### `MODULE.bazel` Configuration
+
+```starlark
+bazel_dep(name = "rules_pmd", version = "...")
+```
+
 ### `WORKSPACE` Configuration
 
 Declare the rule in the `WORKSPACE` file.
@@ -35,10 +43,10 @@ rules_pmd_toolchains()
 Once declared in the `WORSKPACE` file, the rule can be loaded in the `BUILD` file.
 
 ```starlark
-load("@rules_pmd//pmd:defs.bzl", "pmd")
+load("@rules_pmd//pmd:defs.bzl", "pmd_test")
 
-pmd(
-    name = "pmd_analysis",
+pmd_test(
+    name = "pmd_analysis_test",
     srcs = glob(["src/main/java/**/*.java"]),
 )
 ```
