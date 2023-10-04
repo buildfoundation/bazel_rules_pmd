@@ -157,10 +157,3 @@ pmd_test = rule(
     provides = [DefaultInfo],
     test = True,
 )
-
-def pmd_test_target(name, srcs, **kwargs):
-    pmd_test(
-        name = name + "_pmd_test",
-        srcs = srcs,
-        **kwargs,
-    )
