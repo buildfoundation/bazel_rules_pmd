@@ -59,7 +59,7 @@ pmd.pmd_version(
     version = "x.x.x",
     sha256 = "x.x.x.sha256",
 )
-use_repo(pmd, "pmd_cli_all")
+use_repo(pmd, "net_sourceforge_pmd")
 ```
 
 Or change the `WORKSPACE` file:
