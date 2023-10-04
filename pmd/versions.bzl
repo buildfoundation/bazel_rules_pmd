@@ -16,6 +16,6 @@ def pmd_version(version, sha256):
     )
 
 DEFAULT_PMD_RELEASE = pmd_version(
-    version = "6.50.0",
-    sha256 = "ccd2dccebaa5529fb0f95216fc70b6e959ddf1c61aa5a392d737e38b9f254e24",
+    version = "6.55.0",
+    sha256 = "21acf96d43cb40d591cacccc1c20a66fc796eaddf69ea61812594447bac7a11d",
 )
