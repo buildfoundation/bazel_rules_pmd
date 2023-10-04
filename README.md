@@ -5,8 +5,6 @@ for [the Bazel build system](https://bazel.build).
 
 ## Usage
 
-
-
 ### `MODULE.bazel` Configuration
 
 ```starlark
@@ -48,6 +46,33 @@ load("@rules_pmd//pmd:defs.bzl", "pmd_test")
 pmd_test(
     name = "pmd_analysis_test",
     srcs = glob(["src/main/java/**/*.java"]),
+)
+```
+
+#### PMD Version
+
+Change the `MODULE.bazel` file:
+
+```python
+pmd = use_extension("//pmd:extensions.bzl", "pmd")
+pmd.pmd_version(
+    version = "x.x.x",
+    sha256 = "x.x.x.sha256",
+)
+use_repo(pmd, "pmd_cli_all")
+```
+
+Or change the `WORKSPACE` file:
+
+```python
+load("@rules_pmd//pmd:versions.bzl", "pmd_version")
+load("@rules_pmd//pmd:dependencies.bzl", "rules_pmd_dependencies")
+
+rules_pmd_dependencies(
+    pmd_version = pmd_version(
+        version = "x.x.x",
+        sha256 = "x.x.x.sha256",
+    )
 )
 ```
 
