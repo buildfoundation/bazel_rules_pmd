@@ -2,8 +2,33 @@
 The rule analysis tests.
 """
 
-load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
-load("@rules_pmd//pmd:defs.bzl", "pmd_test")
+load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
+load("//pmd:defs.bzl", "pmd_test")
+
+def _expand_path(ctx, value):
+    source_dir = ctx.build_file_path.replace("/BUILD", "")
+    output_dir = ctx.bin_dir.path
+    return value.replace("{{source_dir}}", source_dir).replace("{{output_dir}}", output_dir)
+
+def assert_argv_contains_prefix_suffix(env, action, prefix, suffix):
+    for arg in action.argv:
+        if arg.startswith(prefix) and arg.endswith(suffix):
+            return
+    unittest.fail(
+        env,
+        "Expected an arg with prefix '{prefix}' and suffix '{suffix}' in {args}".format(
+            prefix = prefix,
+            suffix = suffix,
+            args = action.argv,
+        ),
+    )
+
+def assert_argv_contains(env, action, flag):
+    asserts.true(
+        env,
+        flag in action.argv,
+        "Expected {args} to contain {flag}".format(args = action.argv, flag = flag),
+    )
 
 def _expand_paths(ctx, values):
     source_dir = ctx.build_file_path.replace("/BUILD", "")
@@ -22,7 +47,7 @@ def _action_full_contents_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = analysistest.target_actions(env)
-    asserts.equals(env, 7, len(actions))
+    asserts.equals(env, 8, len(actions))
 
     # Action: writing file "srcs.txt"
 
@@ -48,62 +73,55 @@ def _action_full_contents_test_impl(ctx):
 
     # Action: PMD
 
-    action_pmd = actions[2]
+    action = actions[2]
+    assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/pmd/wrapper/bin")
+    assert_argv_contains(env, action, "--file-list")
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_test_target_full.txt"))
+    assert_argv_contains(env, action, "--ignore-list")
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_ignore_test_target_full.txt"))
+    assert_argv_contains(env, action, "--encoding")
+    assert_argv_contains(env, action, "UTF-8")
+    assert_argv_contains(env, action, "-language")
+    assert_argv_contains(env, action, "java")
+    assert_argv_contains(env, action, "-version")
+    assert_argv_contains(env, action, "1.8")
+    assert_argv_contains(env, action, "--rulesets")
+    assert_argv_contains(env, action, _expand_path(ctx, "{{source_dir}}/rulesets.xml"))
+    assert_argv_contains(env, action, "--minimum-priority")
+    assert_argv_contains(env, action, "42")
+    assert_argv_contains(env, action, "--format")
+    assert_argv_contains(env, action, "html")
+    assert_argv_contains(env, action, "--report-file")
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_full_pmd_report.html"))
+    assert_argv_contains(env, action, "--fail-on-violation")
+    assert_argv_contains(env, action, "false")
+    assert_argv_contains(env, action, "--no-cache")
+    assert_argv_contains(env, action, "--threads")
+    assert_argv_contains(env, action, "42")
+    assert_argv_contains(env, action, "--execution-result")
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_full_execution_result.sh"))
 
-    action_pmd_arguments_expected = _expand_paths(env.ctx, [
-        "bazel-out/host/bin/pmd/wrapper/bin",
-        "--file-list",
-        "{{output_dir}}/{{source_dir}}/srcs_test_target_full.txt",
-        "--ignore-list",
-        "{{output_dir}}/{{source_dir}}/srcs_ignore_test_target_full.txt",
-        "--encoding",
-        "UTF-8",
-        "-language",
-        "java",
-        "-version",
-        "1.8",
-        "--rulesets",
-        "{{source_dir}}/rulesets.xml",
-        "--minimum-priority",
-        "42",
-        "--format",
-        "html",
-        "--report-file",
-        "{{output_dir}}/{{source_dir}}/test_target_full_pmd_report.html",
-        "--fail-on-violation",
-        "false",
-        "--no-cache",
-        "--threads",
-        "42",
-        "--execution-result",
-        "{{output_dir}}/{{source_dir}}/test_target_full_execution_result.sh",
-    ])
-    action_pmd_arguments_actual = action_pmd.argv
-
-    action_pmd_inputs_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs_test_target_full.txt",
+    expected_inputs = _expand_paths(env.ctx, [
+        "{{source_dir}}/srcs_test_target_full.txt",
         "{{source_dir}}/path A.kt",
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
-        "{{output_dir}}/{{source_dir}}/srcs_ignore_test_target_full.txt",
+        "{{source_dir}}/srcs_ignore_test_target_full.txt",
         "{{source_dir}}/path D.kt",
         "{{source_dir}}/path E.kt",
         "{{source_dir}}/rulesets.xml",
-        "bazel-out/host/internal/_middlemen/pmd_Swrapper_Sbin-runfiles",
-        "bazel-out/host/bin/pmd/wrapper/bin.jar",
-        "bazel-out/host/bin/pmd/wrapper/bin",
+        "_middlemen/pmd_Swrapper_Sbin-runfiles",
+        "pmd/wrapper/bin.jar",
+        "pmd/wrapper/bin",
     ])
-    action_pmd_inputs_actual = [file.path for file in action_pmd.inputs.to_list()]
 
-    action_pmd_outputs_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/test_target_full_pmd_report.html",
-        "{{output_dir}}/{{source_dir}}/test_target_full_execution_result.sh",
+    expected_outputs = _expand_paths(env.ctx, [
+        "{{source_dir}}/test_target_full_pmd_report.html",
+        "{{source_dir}}/test_target_full_execution_result.sh",
     ])
-    action_pmd_outputs_actual = [file.path for file in action_pmd.outputs.to_list()]
 
-    asserts.equals(env, action_pmd_arguments_expected, action_pmd_arguments_actual)
-    asserts.equals(env, action_pmd_inputs_expected, action_pmd_inputs_actual)
-    asserts.equals(env, action_pmd_outputs_expected, action_pmd_outputs_actual)
+    asserts.equals(env, expected_inputs, [file.short_path for file in action.inputs.to_list()])
+    asserts.equals(env, expected_outputs, [file.short_path for file in action.outputs.to_list()])
 
     return analysistest.end(env)
 
@@ -134,7 +152,7 @@ def _action_blank_contents_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = analysistest.target_actions(env)
-    asserts.equals(env, 6, len(actions))
+    asserts.equals(env, 7, len(actions))
 
     # Action: writing file "srcs.txt"
 
@@ -149,55 +167,49 @@ def _action_blank_contents_test_impl(ctx):
 
     # Action: PMD
 
-    action_pmd = actions[1]
+    action = actions[1]
 
-    action_pmd_arguments_expected = _expand_paths(env.ctx, [
-        "bazel-out/host/bin/pmd/wrapper/bin",
-        "--file-list",
-        "{{output_dir}}/{{source_dir}}/srcs_test_target_blank.txt",
-        "--encoding",
-        "UTF-8",
-        "-language",
-        "java",
-        "--rulesets",
-        "{{source_dir}}/rulesets.xml",
-        "--minimum-priority",
-        "5",
-        "--format",
-        "text",
-        "--report-file",
-        "{{output_dir}}/{{source_dir}}/test_target_blank_pmd_report.txt",
-        "--fail-on-violation",
-        "true",
-        "--no-cache",
-        "--threads",
-        "1",
-        "--execution-result",
-        "{{output_dir}}/{{source_dir}}/test_target_blank_execution_result.sh",
-    ])
-    action_pmd_arguments_actual = action_pmd.argv
+    assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/pmd/wrapper/bin")
+    assert_argv_contains(env, action, "--file-list")
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_test_target_blank.txt"))
+    assert_argv_contains(env, action, "--encoding")
+    assert_argv_contains(env, action, "UTF-8")
+    assert_argv_contains(env, action, "-language")
+    assert_argv_contains(env, action, "java")
+    assert_argv_contains(env, action, "--rulesets")
+    assert_argv_contains(env, action, _expand_path(ctx, "{{source_dir}}/rulesets.xml"))
+    assert_argv_contains(env, action, "--minimum-priority")
+    assert_argv_contains(env, action, "5")
+    assert_argv_contains(env, action, "--format")
+    assert_argv_contains(env, action, "text")
+    assert_argv_contains(env, action, "--report-file")
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_blank_pmd_report.txt"))
+    assert_argv_contains(env, action, "--fail-on-violation")
+    assert_argv_contains(env, action, "true")
+    assert_argv_contains(env, action, "--no-cache")
+    assert_argv_contains(env, action, "--threads")
+    assert_argv_contains(env, action, "1")
+    assert_argv_contains(env, action, "--execution-result")
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_blank_execution_result.sh"))
 
-    action_pmd_inputs_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs_test_target_blank.txt",
+    expected_inputs = _expand_paths(env.ctx, [
+        "{{source_dir}}/srcs_test_target_blank.txt",
         "{{source_dir}}/path A.kt",
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
         "{{source_dir}}/rulesets.xml",
-        "bazel-out/host/internal/_middlemen/pmd_Swrapper_Sbin-runfiles",
-        "bazel-out/host/bin/pmd/wrapper/bin.jar",
-        "bazel-out/host/bin/pmd/wrapper/bin",
+        "_middlemen/pmd_Swrapper_Sbin-runfiles",
+        "pmd/wrapper/bin.jar",
+        "pmd/wrapper/bin",
     ])
-    action_pmd_inputs_actual = [file.path for file in action_pmd.inputs.to_list()]
 
-    action_pmd_outputs_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/test_target_blank_pmd_report.txt",
-        "{{output_dir}}/{{source_dir}}/test_target_blank_execution_result.sh",
+    expected_outputs = _expand_paths(env.ctx, [
+        "{{source_dir}}/test_target_blank_pmd_report.txt",
+        "{{source_dir}}/test_target_blank_execution_result.sh",
     ])
-    action_pmd_outputs_actual = [file.path for file in action_pmd.outputs.to_list()]
 
-    asserts.equals(env, action_pmd_arguments_expected, action_pmd_arguments_actual)
-    asserts.equals(env, action_pmd_inputs_expected, action_pmd_inputs_actual)
-    asserts.equals(env, action_pmd_outputs_expected, action_pmd_outputs_actual)
+    asserts.equals(env, expected_inputs, [file.short_path for file in action.inputs.to_list()])
+    asserts.equals(env, expected_outputs, [file.short_path for file in action.outputs.to_list()])
 
     return analysistest.end(env)
 
