@@ -1,4 +1,4 @@
-load("@rules_pmd//pmd:defs.bzl", "pmd_test")
+load("//pmd:defs.bzl", "pmd_test")
 
 pmd_test(
     name = "pmd_error_test",
