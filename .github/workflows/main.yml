@@ -32,7 +32,7 @@ jobs:
       - name: "Setup Bazelisk"
         uses: bazelbuild/setup-bazelisk@v2
       - name: "Configure Bazel"
-        run: cp .github/workflows/.bazelrc .
+        run: cp .github/workflows/ci.bazelrc .
       - name: "Build"
         run: bazel build //...
       - name: "Analysis tests"
