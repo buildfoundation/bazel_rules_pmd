@@ -33,11 +33,9 @@ jobs:
         uses: bazelbuild/setup-bazelisk@v2
       - name: "Configure Bazel"
         run: cp .github/workflows/.bazelrc .
-      - name: "Fetch"
-        run: bazel fetch //pmd/wrapper:bin
       - name: "Build"
-        run: bazel build //pmd/wrapper:bin
+        run: bazel build //...
       - name: "Analysis tests"
-        run: bazel test //tests/analysis:tests
+        run: bazel test //...
       - name: "Integration tests"
         run: bash tests/integration/suite.sh
