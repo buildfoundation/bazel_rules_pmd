@@ -5,7 +5,7 @@ tasks:
   verify_targets:
     name: "Verify build targets"
     platform: ${{ platform }}
-    test_flags:
+    build_flags:
       - "--enable_bzlmod=true"
-    test_targets:
-      - "@rules_pmd//..."
+    build_targets:
+      - "@rules_pmd//pmd/..."
