@@ -20,9 +20,9 @@ rules_pmd_toolchains()
 
 ## Skylib
 
-skylib_version = "1.3.0"
+skylib_version = "1.4.1"
 
-skylib_sha = "74d544d96f4a5bb630d465ca8bbcfe231e3594e5aae57e1edbf17a6eb3ca2506"
+skylib_sha = "66ffd9315665bfaafc96b52278f57c7e2dd09f5ede279ea6d39b2be471e7e3aa"
 
 http_archive(
     name = "bazel_skylib",
