@@ -21,8 +21,8 @@ def rules_pmd_dependencies(pmd_release = _DEFAULT_PMD_VERSION):
 
     # Java
 
-    rules_java_version = "6.5.1"
-    rules_java_sha = "7b0d9ba216c821ee8697dedc0f9d0a705959ace462a3885fe9ba0347ba950111"
+    rules_java_version = "5.4.1"
+    rules_java_sha = "a1f82b730b9c6395d3653032bd7e3a660f9d5ddb1099f427c1e1fe768f92e395"
 
     maybe(
         repo_rule = http_archive,
