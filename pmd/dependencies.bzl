@@ -7,6 +7,8 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file"
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load(":versions.bzl", _DEFAULT_PMD_VERSION = "DEFAULT_PMD_RELEASE")
 
+_PMD_BUILD_FILE_TEMPLATE = Label("//pmd:BUILD.pmd.bazel")
+
 def rules_pmd_dependencies(pmd_release = _DEFAULT_PMD_VERSION):
     """Fetches `rules_pmd` dependencies.
 
@@ -41,5 +43,5 @@ def _rules_pmd_bzlmod_dependencies(pmd_release):
         url = "https://github.com/pmd/pmd/releases/download/pmd_releases/{v}/pmd-bin-{v}.zip".format(v = pmd_release.version),
         strip_prefix = "pmd-bin-{v}/lib".format(v = pmd_release.version),
         sha256 = pmd_release.sha256,
-        build_file = "//pmd:BUILD.pmd.bazel",
+        build_file = _PMD_BUILD_FILE_TEMPLATE,
     )
