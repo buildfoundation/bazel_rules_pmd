@@ -15,7 +15,7 @@ jobs:
           distribution: "zulu"
           java-version: "11"
       - name: "Setup Bazelisk"
-        uses: bazelbuild/setup-bazelisk@v2
+        uses: bazelbuild/setup-bazelisk@v3
       - name: "Linting Starlark"
         run: bazel run @buildifier_prebuilt//:buildifier -- -mode check -lint warn -r .
 
@@ -30,7 +30,7 @@ jobs:
           distribution: "zulu"
           java-version: "11"
       - name: "Setup Bazelisk"
-        uses: bazelbuild/setup-bazelisk@v2
+        uses: bazelbuild/setup-bazelisk@v3
       - name: "Configure Bazel"
         run: cp .github/workflows/ci.bazelrc .
       - name: "Build"
@@ -50,7 +50,7 @@ jobs:
           distribution: "zulu"
           java-version: "11"
       - name: "Setup Bazelisk"
-        uses: bazelbuild/setup-bazelisk@v2
+        uses: bazelbuild/setup-bazelisk@v3
       - name: "Configure Bazel"
         run: cp .github/workflows/ci.bazelrc .
       - name: "Build"
