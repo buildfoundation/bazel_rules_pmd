@@ -1,14 +1,23 @@
 name: CI
 
 on:
+  push:
+    branches: [master]
   pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  # Cancel previous actions from the same PR or branch except 'master' branch.
+  group: concurrency-group::${{ github.workflow }}::${{ github.event.pull_request.number > 0 && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}${{ github.ref_name == 'master' && format('::{0}', github.run_id) || ''}}
+  cancel-in-progress: ${{ github.ref_name != 'master' }}
 
 jobs:
   buildifier:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout the sources"
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6
       - name: "Install JDK 21"
         uses: actions/setup-java@v5
         with:
@@ -20,18 +29,20 @@ jobs:
         run: bazel run @buildifier_prebuilt//:buildifier -- -mode check -lint warn -r .
 
   build:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        include:
-          - mode: bzlmod
+        os: [ubuntu-latest, macos-latest]
+        bazel_version: ["7.x", "8.x"]
+        mode:
+          - name: bzlmod
             flags: ""
-          - mode: workspace
+          - name: workspace
             flags: "--noenable_bzlmod --enable_workspace"
-    name: build (${{ matrix.mode }})
+    runs-on: ${{ matrix.os }}
+    name: build (${{ matrix.os }}, bazel ${{ matrix.bazel_version }}, ${{ matrix.mode.name }})
     steps:
       - name: "Checkout the sources"
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6
       - name: "Install JDK 21"
         uses: actions/setup-java@v5
         with:
@@ -42,17 +53,22 @@ jobs:
         with:
           path: |
             ~/.cache/bazel-disk-cache
-          key: bazel-cache-${{ matrix.mode }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE.bazel', 'WORKSPACE.bzlmod') }}
-          restore-keys: bazel-cache-${{ matrix.mode }}-
+          key: bazel-cache-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ matrix.mode.name }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE.bazel', 'WORKSPACE.bzlmod') }}
+          restore-keys: bazel-cache-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ matrix.mode.name }}-
       - name: "Setup Bazelisk"
         uses: bazelbuild/setup-bazelisk@v3
       - name: "Configure Bazel"
         run: cp .github/workflows/ci.bazelrc .
       - name: "Build"
-        run: bazel build //... ${{ matrix.flags }}
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        run: bazel build //... ${{ matrix.mode.flags }}
       - name: "Unit tests"
-        run: bazel test //... ${{ matrix.flags }}
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        run: bazel test //... ${{ matrix.mode.flags }}
       - name: "Integration tests"
         env:
-          EXTRA_BAZEL_ARGS: ${{ matrix.flags }}
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+          EXTRA_BAZEL_ARGS: ${{ matrix.mode.flags }}
         run: bash tests/integration/suite.sh
