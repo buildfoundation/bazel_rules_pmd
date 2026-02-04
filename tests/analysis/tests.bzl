@@ -110,9 +110,9 @@ def _action_full_contents_test_impl(ctx):
         "{{source_dir}}/path D.kt",
         "{{source_dir}}/path E.kt",
         "{{source_dir}}/rulesets.xml",
-        "_middlemen/pmd_Swrapper_Sbin-runfiles",
-        "pmd/wrapper/bin.jar",
         "pmd/wrapper/bin",
+        "pmd/wrapper/bin.jar",
+        "pmd/wrapper/bin.runfiles",
     ])
 
     expected_outputs = _expand_paths(env.ctx, [
@@ -120,8 +120,8 @@ def _action_full_contents_test_impl(ctx):
         "{{source_dir}}/test_target_full_execution_result.sh",
     ])
 
-    asserts.equals(env, expected_inputs, [file.short_path for file in action.inputs.to_list()])
-    asserts.equals(env, expected_outputs, [file.short_path for file in action.outputs.to_list()])
+    asserts.equals(env, sorted(expected_inputs), sorted([file.short_path for file in action.inputs.to_list()]))
+    asserts.equals(env, sorted(expected_outputs), sorted([file.short_path for file in action.outputs.to_list()]))
 
     return analysistest.end(env)
 
@@ -199,9 +199,9 @@ def _action_blank_contents_test_impl(ctx):
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
         "{{source_dir}}/rulesets.xml",
-        "_middlemen/pmd_Swrapper_Sbin-runfiles",
-        "pmd/wrapper/bin.jar",
         "pmd/wrapper/bin",
+        "pmd/wrapper/bin.jar",
+        "pmd/wrapper/bin.runfiles",
     ])
 
     expected_outputs = _expand_paths(env.ctx, [
@@ -209,8 +209,8 @@ def _action_blank_contents_test_impl(ctx):
         "{{source_dir}}/test_target_blank_execution_result.sh",
     ])
 
-    asserts.equals(env, expected_inputs, [file.short_path for file in action.inputs.to_list()])
-    asserts.equals(env, expected_outputs, [file.short_path for file in action.outputs.to_list()])
+    asserts.equals(env, sorted(expected_inputs), sorted([file.short_path for file in action.inputs.to_list()]))
+    asserts.equals(env, sorted(expected_outputs), sorted([file.short_path for file in action.outputs.to_list()]))
 
     return analysistest.end(env)
 

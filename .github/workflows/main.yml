@@ -54,4 +54,10 @@ jobs:
       - name: "Configure Bazel"
         run: cp .github/workflows/ci.bazelrc .
       - name: "Build"
-        run: bazel build //... --enable_bzlmod=False
+        run: bazel build //... --enable_bzlmod=false --enable_workspace=true
+      - name: "Unit tests"
+        run: bazel test //... --enable_bzlmod=false --enable_workspace=true
+      - name: "Integration tests"
+        env:
+          EXTRA_BAZEL_ARGS: "--enable_bzlmod=false --enable_workspace=true"
+        run: bash tests/integration/suite.sh
