@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout the sources"
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
       - name: "Install JDK 21"
         uses: actions/setup-java@v5
         with:
@@ -31,18 +31,18 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        bazel_version: ["7.x", "8.x"]
+        os: [ubuntu-latest]
+        bazel_version: ["8.x", "9.x"]
         mode:
           - name: bzlmod
-            flags: ""
+            flags: "--enable_bzlmod --noenable_workspace"
           - name: workspace
             flags: "--noenable_bzlmod --enable_workspace"
     runs-on: ${{ matrix.os }}
     name: build (${{ matrix.os }}, bazel ${{ matrix.bazel_version }}, ${{ matrix.mode.name }})
     steps:
       - name: "Checkout the sources"
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
       - name: "Install JDK 21"
         uses: actions/setup-java@v5
         with:
