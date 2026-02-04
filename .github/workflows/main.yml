@@ -1,57 +1,74 @@
 name: CI
 
 on:
+  push:
+    branches: [master]
   pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  # Cancel previous actions from the same PR or branch except 'master' branch.
+  group: concurrency-group::${{ github.workflow }}::${{ github.event.pull_request.number > 0 && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}${{ github.ref_name == 'master' && format('::{0}', github.run_id) || ''}}
+  cancel-in-progress: ${{ github.ref_name != 'master' }}
 
 jobs:
   buildifier:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout the sources"
-        uses: actions/checkout@v4.2.2
-      - name: "Install JDK 11"
-        uses: actions/setup-java@v4
+        uses: actions/checkout@v6.0.2
+      - name: "Install JDK 21"
+        uses: actions/setup-java@v5
         with:
           distribution: "zulu"
-          java-version: "11"
+          java-version: "21"
       - name: "Setup Bazelisk"
         uses: bazelbuild/setup-bazelisk@v3
       - name: "Linting Starlark"
         run: bazel run @buildifier_prebuilt//:buildifier -- -mode check -lint warn -r .
 
-  build-bzlmod:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        bazel_version: ["8.x", "9.x"]
+        mode:
+          - name: bzlmod
+            flags: "--enable_bzlmod --noenable_workspace"
+          - name: workspace
+            flags: "--noenable_bzlmod --enable_workspace"
+    runs-on: ${{ matrix.os }}
+    name: build (${{ matrix.os }}, bazel ${{ matrix.bazel_version }}, ${{ matrix.mode.name }})
     steps:
       - name: "Checkout the sources"
-        uses: actions/checkout@v4.2.2
-      - name: "Install JDK 11"
-        uses: actions/setup-java@v4
+        uses: actions/checkout@v6.0.2
+      - name: "Install JDK 21"
+        uses: actions/setup-java@v5
         with:
           distribution: "zulu"
-          java-version: "11"
+          java-version: "21"
+      - name: Mount bazel caches
+        uses: actions/cache@v5.0.3
+        with:
+          path: |
+            ~/.cache/bazel-disk-cache
+          key: bazel-cache-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ matrix.mode.name }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE.bazel', 'WORKSPACE.bzlmod') }}
+          restore-keys: bazel-cache-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ matrix.mode.name }}-
       - name: "Setup Bazelisk"
         uses: bazelbuild/setup-bazelisk@v3
       - name: "Configure Bazel"
         run: cp .github/workflows/ci.bazelrc .
       - name: "Build"
-        run: bazel build //... --enable_bzlmod=True
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        run: bazel build //... ${{ matrix.mode.flags }}
       - name: "Unit tests"
-        run: bazel test //... --enable_bzlmod=True
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        run: bazel test //... ${{ matrix.mode.flags }}
       - name: "Integration tests"
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+          EXTRA_BAZEL_ARGS: ${{ matrix.mode.flags }}
         run: bash tests/integration/suite.sh
-  build-workspace:
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Checkout the sources"
-        uses: actions/checkout@v4.2.2
-      - name: "Install JDK 11"
-        uses: actions/setup-java@v4
-        with:
-          distribution: "zulu"
-          java-version: "11"
-      - name: "Setup Bazelisk"
-        uses: bazelbuild/setup-bazelisk@v3
-      - name: "Configure Bazel"
-        run: cp .github/workflows/ci.bazelrc .
-      - name: "Build"
-        run: bazel build //... --enable_bzlmod=False
