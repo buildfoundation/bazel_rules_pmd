@@ -1,6 +1,4 @@
 common --enable_bzlmod
-common --enable_workspace
 common --test_tag_filters=-manual
 
 try-import %workspace%/ci.bazelrc
-test --strategy=PMD=local --test_tag_filters=manual

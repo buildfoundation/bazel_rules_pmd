@@ -8,56 +8,44 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout the sources"
-        uses: actions/checkout@v4.2.2
-      - name: "Install JDK 11"
+        uses: actions/checkout@v6.0.2
+      - name: "Install JDK 21"
         uses: actions/setup-java@v4
         with:
           distribution: "zulu"
-          java-version: "11"
+          java-version: "21"
       - name: "Setup Bazelisk"
         uses: bazelbuild/setup-bazelisk@v3
       - name: "Linting Starlark"
         run: bazel run @buildifier_prebuilt//:buildifier -- -mode check -lint warn -r .
 
-  build-bzlmod:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - mode: bzlmod
+            flags: ""
+          - mode: workspace
+            flags: "--noenable_bzlmod --enable_workspace"
+    name: build (${{ matrix.mode }})
     steps:
       - name: "Checkout the sources"
-        uses: actions/checkout@v4.2.2
-      - name: "Install JDK 11"
+        uses: actions/checkout@v6.0.2
+      - name: "Install JDK 21"
         uses: actions/setup-java@v4
         with:
           distribution: "zulu"
-          java-version: "11"
+          java-version: "21"
       - name: "Setup Bazelisk"
         uses: bazelbuild/setup-bazelisk@v3
       - name: "Configure Bazel"
         run: cp .github/workflows/ci.bazelrc .
       - name: "Build"
-        run: bazel build //... --enable_bzlmod=True
+        run: bazel build //... ${{ matrix.flags }}
       - name: "Unit tests"
-        run: bazel test //... --enable_bzlmod=True
-      - name: "Integration tests"
-        run: bash tests/integration/suite.sh
-  build-workspace:
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Checkout the sources"
-        uses: actions/checkout@v4.2.2
-      - name: "Install JDK 11"
-        uses: actions/setup-java@v4
-        with:
-          distribution: "zulu"
-          java-version: "11"
-      - name: "Setup Bazelisk"
-        uses: bazelbuild/setup-bazelisk@v3
-      - name: "Configure Bazel"
-        run: cp .github/workflows/ci.bazelrc .
-      - name: "Build"
-        run: bazel build //... --enable_bzlmod=false --enable_workspace=true
-      - name: "Unit tests"
-        run: bazel test //... --enable_bzlmod=false --enable_workspace=true
+        run: bazel test //... ${{ matrix.flags }}
       - name: "Integration tests"
         env:
-          EXTRA_BAZEL_ARGS: "--enable_bzlmod=false --enable_workspace=true"
+          EXTRA_BAZEL_ARGS: ${{ matrix.flags }}
         run: bash tests/integration/suite.sh
