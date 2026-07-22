@@ -20,7 +20,7 @@ jobs:
         run: bazel run @buildifier_prebuilt//:buildifier -- -mode check -lint warn -r .
 
   build-bzlmod:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: "Checkout the sources"
         uses: actions/checkout@v4.2.2
@@ -40,7 +40,7 @@ jobs:
       - name: "Integration tests"
         run: bash tests/integration/suite.sh
   build-workspace:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: "Checkout the sources"
         uses: actions/checkout@v4.2.2
