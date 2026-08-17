@@ -23,19 +23,4 @@ cat << EOF
 \`\`\`starlark
 bazel_dep(name = "rules_pmd", version = "${TAG:1}")
 \`\`\`
-
-## Using WORKSPACE
-
-Paste this snippet into your `WORKSPACE.bazel` file:
-
-\`\`\`starlark
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-http_archive(
-    name = "rules_pmd",
-    sha256 = "${SHA}",
-    strip_prefix = "${PREFIX}",
-    url = "https://github.com/buildfoundation/bazel_rules_pmd/releases/download/${TAG}/${ARCHIVE}",
-)
 EOF
-
-echo "\`\`\`"

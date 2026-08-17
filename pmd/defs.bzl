@@ -78,7 +78,7 @@ def _impl(ctx):
         DefaultInfo(
             files = depset(outputs),
             executable = execution_result,
-        )
+        ),
     ]
 
 def _write_files_list(ctx, files, file_name):
@@ -105,7 +105,7 @@ pmd_test = rule(
         "_executable": attr.label(
             default = "//pmd/wrapper:bin",
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
         "srcs": attr.label_list(
             allow_files = True,
