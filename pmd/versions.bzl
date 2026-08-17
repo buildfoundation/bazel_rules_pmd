@@ -1,3 +1,5 @@
+"""PMD release definitions."""
+
 def pmd_version(version, sha256):
     """Create a pmd version.
 

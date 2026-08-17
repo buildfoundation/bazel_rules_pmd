@@ -9,7 +9,7 @@ echo ":: Target with errorless rulesets does not produce error."
 echo
 
 set +e
-bazel test //tests/integration:${TARGET} > /dev/null
+bazel test ${EXTRA_BAZEL_ARGS:-} //tests/integration:${TARGET}
 
 readonly BAZEL_EXIT_CODE=$?
 set -e

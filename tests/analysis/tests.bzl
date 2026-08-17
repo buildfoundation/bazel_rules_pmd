@@ -41,6 +41,15 @@ def _expand_paths(ctx, values):
         for value in values
     ]
 
+def _asserted_input_short_paths(action):
+    # ponytail: the wrapper runfiles tree is named `_middlemen/…` on Bazel 8 and
+    # `…/bin.runfiles` on Bazel 9, so it is skipped instead of asserted.
+    return sorted([
+        file.short_path
+        for file in action.inputs.to_list()
+        if not file.short_path.startswith("_middlemen/") and not file.short_path.endswith(".runfiles")
+    ])
+
 # Action full contents test
 
 def _action_full_contents_test_impl(ctx):
@@ -110,9 +119,8 @@ def _action_full_contents_test_impl(ctx):
         "{{source_dir}}/path D.kt",
         "{{source_dir}}/path E.kt",
         "{{source_dir}}/rulesets.xml",
-        "_middlemen/pmd_Swrapper_Sbin-runfiles",
-        "pmd/wrapper/bin.jar",
         "pmd/wrapper/bin",
+        "pmd/wrapper/bin.jar",
     ])
 
     expected_outputs = _expand_paths(env.ctx, [
@@ -120,8 +128,8 @@ def _action_full_contents_test_impl(ctx):
         "{{source_dir}}/test_target_full_execution_result.sh",
     ])
 
-    asserts.equals(env, expected_inputs, [file.short_path for file in action.inputs.to_list()])
-    asserts.equals(env, expected_outputs, [file.short_path for file in action.outputs.to_list()])
+    asserts.equals(env, sorted(expected_inputs), _asserted_input_short_paths(action))
+    asserts.equals(env, sorted(expected_outputs), sorted([file.short_path for file in action.outputs.to_list()]))
 
     return analysistest.end(env)
 
@@ -199,9 +207,8 @@ def _action_blank_contents_test_impl(ctx):
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
         "{{source_dir}}/rulesets.xml",
-        "_middlemen/pmd_Swrapper_Sbin-runfiles",
-        "pmd/wrapper/bin.jar",
         "pmd/wrapper/bin",
+        "pmd/wrapper/bin.jar",
     ])
 
     expected_outputs = _expand_paths(env.ctx, [
@@ -209,8 +216,8 @@ def _action_blank_contents_test_impl(ctx):
         "{{source_dir}}/test_target_blank_execution_result.sh",
     ])
 
-    asserts.equals(env, expected_inputs, [file.short_path for file in action.inputs.to_list()])
-    asserts.equals(env, expected_outputs, [file.short_path for file in action.outputs.to_list()])
+    asserts.equals(env, sorted(expected_inputs), _asserted_input_short_paths(action))
+    asserts.equals(env, sorted(expected_outputs), sorted([file.short_path for file in action.outputs.to_list()]))
 
     return analysistest.end(env)
 
