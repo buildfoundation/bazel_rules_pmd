@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout the sources"
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.1
       - name: "Install JDK 21"
         uses: actions/setup-java@v5
         with:
@@ -37,7 +37,7 @@ jobs:
     name: build (${{ matrix.os }}, bazel ${{ matrix.bazel_version }})
     steps:
       - name: "Checkout the sources"
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v7.0.1
       - name: "Install JDK 21"
         uses: actions/setup-java@v5
         with:
