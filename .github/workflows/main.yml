@@ -27,9 +27,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        bazel_version: ["8.x", "9.x"]
+        bazel_version: ["8.x", "9.x", "rolling"]
+      fail-fast: false
     runs-on: ${{ matrix.os }}
     name: build (${{ matrix.os }}, bazel ${{ matrix.bazel_version }})
+    env:
+      USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
     steps:
       - name: "Checkout the sources"
         uses: actions/checkout@v7.0.1
@@ -38,26 +41,23 @@ jobs:
         with:
           distribution: "zulu"
           java-version: "21"
-      - name: Mount bazel caches
-        uses: actions/cache@v5.0.3
+      - name: "Setup Bazel"
+        uses: bazel-contrib/setup-bazel@0.19.0
         with:
-          path: |
-            ~/.cache/bazel-disk-cache
-          key: bazel-cache-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'MODULE.bazel') }}
-          restore-keys: bazel-cache-${{ matrix.os }}-${{ matrix.bazel_version }}-
-      - name: "Setup Bazelisk"
-        uses: bazelbuild/setup-bazelisk@v3
-      - name: "Configure Bazel"
-        run: cp .github/workflows/ci.bazelrc .
-      - name: "Build"
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        run: bazel build //...
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - name: "Unit tests"
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         run: bazel test //...
       - name: "Integration tests"
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         run: bash tests/integration/suite.sh
+      - name: Verify MODULE.bazel.lock is unchanged
+        if: ${{ always() && matrix.bazel_version == '9.x' }}
+        shell: bash
+        run: |
+          if [[ -n "$(git status --porcelain -- MODULE.bazel.lock)" ]]; then
+            git diff -- MODULE.bazel.lock
+            git diff --cached -- MODULE.bazel.lock
+            echo "::error file=MODULE.bazel.lock::MODULE.bazel.lock changed during CI. Run Bazel locally and commit the updated lockfile."
+            exit 1
+          fi
