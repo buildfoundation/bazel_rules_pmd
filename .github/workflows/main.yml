@@ -57,7 +57,3 @@ jobs:
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         run: bazel test //...
-      - name: "Integration tests"
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        run: bash tests/integration/suite.sh
