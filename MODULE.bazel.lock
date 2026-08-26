@@ -195,7 +195,7 @@
   "moduleExtensions": {
     "//pmd:extensions.bzl%pmd": {
       "general": {
-        "bzlTransitiveDigest": "EI521Kh5xECF+6oP3utw/FdI+zoxqtLD1zmBhMGxN1s=",
+        "bzlTransitiveDigest": "w9yE8BW89g5wXWZ0Gvt3XlHvcjlvmtcWBodXwz/pnfY=",
         "usagesDigest": "trQm7+xfAVOGdK0XpZ4as9UqqePv7mpb5UP38pHp9SU=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
@@ -205,10 +205,10 @@
             "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
             "attributes": {
               "urls": [
-                "https://github.com/pmd/pmd/releases/download/pmd_releases/6.55.0/pmd-bin-6.55.0.zip"
+                "https://github.com/pmd/pmd/releases/download/pmd_releases/7.26.0/pmd-dist-7.26.0-bin.zip"
               ],
-              "strip_prefix": "pmd-bin-6.55.0/lib",
-              "sha256": "21acf96d43cb40d591cacccc1c20a66fc796eaddf69ea61812594447bac7a11d",
+              "strip_prefix": "pmd-bin-7.26.0/lib",
+              "sha256": "9f55cb7ff0e9f9a66dd2f005eaa370e84c8a4cd971b134aa14a930c4a283ebc9",
               "build_file": "@@//pmd:BUILD.pmd.bazel"
             }
           }

@@ -86,7 +86,7 @@ def _action_full_contents_test_impl(ctx):
     action_write_file_srcs_outputs_actual = [file.path for file in action_write_file_srcs.outputs.to_list()]
 
     asserts.equals(env, action_write_file_srcs_outputs_expected, action_write_file_srcs_outputs_actual)
-    asserts.equals(env, ",".join(_expand_paths(env.ctx, [
+    asserts.equals(env, "\n".join(_expand_paths(env.ctx, [
         "{{source_dir}}/path A.kt",
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
@@ -102,7 +102,7 @@ def _action_full_contents_test_impl(ctx):
     action_write_file_srcs_ignore_ouptuts_actual = [file.path for file in action_write_file_srcs_ignore.outputs.to_list()]
 
     asserts.equals(env, action_write_file_srcs_ignore_ouptuts_expected, action_write_file_srcs_ignore_ouptuts_actual)
-    asserts.equals(env, ",".join(_expand_paths(env.ctx, [
+    asserts.equals(env, "\n".join(_expand_paths(env.ctx, [
         "{{source_dir}}/path D.kt",
         "{{source_dir}}/path E.kt",
     ])), action_write_file_srcs_ignore.content)
@@ -113,14 +113,14 @@ def _action_full_contents_test_impl(ctx):
     assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/pmd/wrapper/bin")
     assert_argv_contains(env, action, "--file-list")
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_test_target_full.txt"))
-    assert_argv_contains(env, action, "--ignore-list")
+    assert_argv_contains(env, action, "--exclude-file-list")
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_ignore_test_target_full.txt"))
     assert_argv_contains(env, action, "--encoding")
     assert_argv_contains(env, action, "UTF-8")
-    assert_argv_contains(env, action, "-language")
+    assert_argv_contains(env, action, "--force-language")
     assert_argv_contains(env, action, "java")
-    assert_argv_contains(env, action, "-version")
-    assert_argv_contains(env, action, "1.8")
+    assert_argv_contains(env, action, "--use-version")
+    assert_argv_contains(env, action, "java-1.8")
     assert_argv_contains(env, action, "--rulesets")
     assert_argv_contains(env, action, _expand_path(ctx, "{{source_dir}}/rulesets.xml"))
     assert_argv_contains(env, action, "--minimum-priority")
@@ -129,9 +129,9 @@ def _action_full_contents_test_impl(ctx):
     assert_argv_contains(env, action, "html")
     assert_argv_contains(env, action, "--report-file")
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_full_pmd_report.html"))
-    assert_argv_contains(env, action, "--fail-on-violation")
-    assert_argv_contains(env, action, "false")
+    assert_argv_contains(env, action, "--no-fail-on-violation")
     assert_argv_contains(env, action, "--no-cache")
+    assert_argv_contains(env, action, "--no-progress")
     assert_argv_contains(env, action, "--threads")
     assert_argv_contains(env, action, "42")
     assert_argv_contains(env, action, "--execution-result")
@@ -226,7 +226,7 @@ def _action_blank_contents_test_impl(ctx):
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_test_target_blank.txt"))
     assert_argv_contains(env, action, "--encoding")
     assert_argv_contains(env, action, "UTF-8")
-    assert_argv_contains(env, action, "-language")
+    assert_argv_contains(env, action, "--force-language")
     assert_argv_contains(env, action, "java")
     assert_argv_contains(env, action, "--rulesets")
     assert_argv_contains(env, action, _expand_path(ctx, "{{source_dir}}/rulesets.xml"))
@@ -236,9 +236,8 @@ def _action_blank_contents_test_impl(ctx):
     assert_argv_contains(env, action, "text")
     assert_argv_contains(env, action, "--report-file")
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_blank_pmd_report.txt"))
-    assert_argv_contains(env, action, "--fail-on-violation")
-    assert_argv_contains(env, action, "true")
     assert_argv_contains(env, action, "--no-cache")
+    assert_argv_contains(env, action, "--no-progress")
     assert_argv_contains(env, action, "--threads")
     assert_argv_contains(env, action, "1")
     assert_argv_contains(env, action, "--execution-result")
@@ -309,7 +308,8 @@ def _action_custom_jvm_flags_test_impl(ctx):
         "--jvm_flag=-Dexample.property=value with spaces",
         "--jvm_flag=-Xmx128m",
     ], action.argv[1:4])
-    asserts.equals(env, "--file-list", action.argv[4])
+    asserts.equals(env, "check", action.argv[4])
+    asserts.equals(env, "--file-list", action.argv[5])
 
     return analysistest.end(env)
 
@@ -320,13 +320,57 @@ action_custom_jvm_flags_test = analysistest.make(
     },
 )
 
+# PMD 6 language aliases retained by the public rule API
+
+def _action_language_alias_test_impl(ctx):
+    env = analysistest.begin(ctx)
+
+    actions = analysistest.target_actions(env)
+    pmd_actions = [action for action in actions if action.mnemonic == "PMD"]
+    asserts.equals(env, 1, len(pmd_actions))
+
+    action = pmd_actions[0]
+    assert_argv_contains(env, action, "check")
+    assert_argv_contains(env, action, "--force-language")
+    assert_argv_contains(env, action, ctx.attr.expected_language)
+    assert_argv_contains(env, action, "--use-version")
+    assert_argv_contains(env, action, "{}-1.8".format(ctx.attr.expected_language))
+
+    return analysistest.end(env)
+
+action_language_alias_test = analysistest.make(
+    _action_language_alias_test_impl,
+    attrs = {
+        "expected_language": attr.string(mandatory = True),
+    },
+)
+
+def _test_action_language_alias(language, expected_language):
+    target_name = "test_target_language_alias_{}".format(language)
+    test_name = "action_language_alias_{}_test".format(language)
+
+    pmd_test(
+        name = target_name,
+        srcs = ["path A.kt"],
+        srcs_language = language,
+        srcs_language_version = "1.8",
+        rulesets = ["rulesets.xml"],
+        tags = ["manual"],
+    )
+
+    action_language_alias_test(
+        name = test_name,
+        expected_language = expected_language,
+        target_under_test = ":{}".format(target_name),
+    )
+
 # PMD version URL templates test
 
 def _pmd_version_test_impl(ctx):
     env = unittest.begin(ctx)
 
     default_urls = [
-        "https://github.com/pmd/pmd/releases/download/pmd_releases/{version}/pmd-bin-{version}.zip",
+        "https://github.com/pmd/pmd/releases/download/pmd_releases/{version}/pmd-dist-{version}-bin.zip",
     ]
     original = pmd_version("1.2.3", "original-sha")
     explicit_none = pmd_version("1.2.3", "original-sha", None)
@@ -341,8 +385,8 @@ def _pmd_version_test_impl(ctx):
     asserts.equals(env, "7.0.0", custom.version)
     asserts.equals(env, "custom-sha", custom.sha256)
     asserts.equals(env, custom_urls, custom.url_templates)
-    asserts.equals(env, "6.55.0", DEFAULT_PMD_RELEASE.version)
-    asserts.equals(env, "21acf96d43cb40d591cacccc1c20a66fc796eaddf69ea61812594447bac7a11d", DEFAULT_PMD_RELEASE.sha256)
+    asserts.equals(env, "7.26.0", DEFAULT_PMD_RELEASE.version)
+    asserts.equals(env, "9f55cb7ff0e9f9a66dd2f005eaa370e84c8a4cd971b134aa14a930c4a283ebc9", DEFAULT_PMD_RELEASE.sha256)
     asserts.equals(env, default_urls, DEFAULT_PMD_RELEASE.url_templates)
 
     return unittest.end(env)
@@ -359,6 +403,8 @@ def test_suite(name):
     """
     _test_action_full_contents()
     _test_action_blank_contents()
+    _test_action_language_alias("vf", "visualforce")
+    _test_action_language_alias("vm", "velocity")
     action_custom_jvm_flags_test(
         name = "action_custom_jvm_flags_test",
         target_under_test = ":test_target_blank",
@@ -370,6 +416,8 @@ def test_suite(name):
         tests = [
             ":action_full_contents_test",
             ":action_blank_contents_test",
+            ":action_language_alias_vf_test",
+            ":action_language_alias_vm_test",
             ":action_custom_jvm_flags_test",
             ":pmd_version_test",
         ],

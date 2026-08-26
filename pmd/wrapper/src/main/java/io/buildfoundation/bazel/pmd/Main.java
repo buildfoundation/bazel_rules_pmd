@@ -1,9 +1,11 @@
 package io.buildfoundation.bazel.pmd;
 
-import net.sourceforge.pmd.PMD;
+// ponytail: PMD has no public non-exiting CLI entrypoint; this internal adapter must be checked on PMD upgrades.
+import net.sourceforge.pmd.cli.commands.internal.PmdRootCommand;
 import net.sourceforge.pmd.renderers.TextColorRenderer;
 import net.sourceforge.pmd.renderers.TextPadRenderer;
 import net.sourceforge.pmd.renderers.TextRenderer;
+import picocli.CommandLine;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -24,9 +26,12 @@ public final class Main {
 
         List<String> pmdArgs = sanitizePmdArguments(inputArgs);
 
-        PMD.StatusCode result = PMD.runPmd(pmdArgs.toArray(new String[0]));
+        System.setProperty("picocli.disable.closures", "true");
+        int result = new CommandLine(new PmdRootCommand())
+                .setCaseInsensitiveEnumValuesAllowed(true)
+                .execute(pmdArgs.toArray(new String[0]));
 
-        if (!result.equals(PMD.StatusCode.OK)) {
+        if (result != 0) {
             printError(pmdArgs);
         }
 
@@ -53,9 +58,9 @@ public final class Main {
     /**
      * Writes the execution result to a file
      */
-    private static void writeExecutionResultToFile(PMD.StatusCode statusCode, String executionResultOutputPath) {
+    private static void writeExecutionResultToFile(int statusCode, String executionResultOutputPath) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(executionResultOutputPath))) {
-            writer.write(String.format("#!/bin/bash\n\nexit %d\n", statusCode.toInt()));
+            writer.write(String.format("#!/bin/bash\n\nexit %d\n", statusCode));
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);

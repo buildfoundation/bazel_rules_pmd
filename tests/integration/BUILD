@@ -65,6 +65,7 @@ pmd_test(
     srcs = glob(["src/main/java/**/*.java"]),
     report_format = "text",
     rulesets = ["pmd_rulesets_errorless.xml"],
+    srcs_language_version = "1.8",
     tags = ["manual"],
 )
 
@@ -136,6 +137,25 @@ sh_test(
 )
 
 pmd_test(
+    name = "pmd_error_sarif",
+    srcs = glob(["src/main/java/**/*.java"]),
+    report_format = "sarif",
+    rulesets = ["pmd_rulesets_error.xml"],
+    tags = ["manual"],
+)
+
+sh_test(
+    name = "pmd_error_sarif_test",
+    srcs = ["test_pmd.sh"],
+    args = [
+        "4",
+        "$(rootpath :pmd_error_sarif)",
+        "sarif",
+    ],
+    data = [":pmd_error_sarif"],
+)
+
+pmd_test(
     name = "pmd_error_xml",
     srcs = glob(["src/main/java/**/*.java"]),
     report_format = "xml",
@@ -157,6 +177,14 @@ sh_test(
 sh_test(
     name = "pmd_wrapper_arguments_test",
     srcs = ["test_wrapper.sh"],
-    args = ["$(rootpath //pmd/wrapper:bin)"],
-    data = ["//pmd/wrapper:bin"],
+    args = [
+        "$(rootpath //pmd/wrapper:bin)",
+        "$(rootpath src/main/java/A.java)",
+        "$(rootpath pmd_rulesets_error.xml)",
+    ],
+    data = [
+        "pmd_rulesets_error.xml",
+        "src/main/java/A.java",
+        "//pmd/wrapper:bin",
+    ],
 )

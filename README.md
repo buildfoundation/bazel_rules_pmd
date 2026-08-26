@@ -23,6 +23,7 @@ load("@rules_pmd//pmd:defs.bzl", "pmd_test")
 pmd_test(
     name = "pmd_analysis_test",
     srcs = glob(["src/main/java/**/*.java"]),
+    rulesets = ["pmd_ruleset.xml"],
 )
 ```
 
@@ -47,14 +48,20 @@ pmd.pmd_version(
     version = "x.x.x",
     sha256 = "x.x.x.sha256",
     url_templates = [
-        "https://my-mirror.example.com/pmd/pmd-bin-{version}.zip",
-        "https://backup.example.com/pmd/pmd-bin-{version}.zip",
+        "https://my-mirror.example.com/pmd/pmd-dist-{version}-bin.zip",
+        "https://backup.example.com/pmd/pmd-dist-{version}-bin.zip",
     ],
 )
 use_repo(pmd, "net_sourceforge_pmd")
 ```
 
 Each template may contain `{version}`, which is replaced with the selected PMD version. Supplying a non-empty list replaces the default GitHub URL; omitting `url_templates`, or passing an empty list, uses that default. Custom URLs must provide the same pinned PMD distribution archive layout (`pmd-bin-{version}/lib`) and the `sha256` of that archive.
+
+This release uses PMD 7.26.0. Custom PMD distributions must be PMD 7.14.0 or newer because the rule uses `--exclude-file-list`; PMD 6 distributions are no longer supported. Existing rulesets may need updates; see the [PMD 7 migration guide](https://docs.pmd-code.org/latest/pmd_userdocs_migrating_to_pmd7.html) and use PMD 7 rule references, for example:
+
+```xml
+<rule ref="category/java/bestpractices.xml/AbstractClassWithoutAbstractMethod" />
+```
 
 See [available attributes](docs/rule.md).
 
