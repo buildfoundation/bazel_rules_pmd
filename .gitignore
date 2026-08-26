@@ -1,6 +1,8 @@
 # Bazel
 
 /bazel-*
+/e2e/smoke/bazel-*
+/e2e/smoke/MODULE.bazel.lock
 
 # IntelliJ IDEA
 

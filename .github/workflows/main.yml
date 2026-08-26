@@ -49,6 +49,9 @@ jobs:
           repository-cache: true
       - name: "Unit tests"
         run: bazel test //...
+      - name: "Downstream smoke test"
+        working-directory: e2e/smoke
+        run: bazel test --lockfile_mode=off //...
       - name: Verify MODULE.bazel.lock is unchanged
         if: ${{ always() && matrix.bazel_version == '9.x' }}
         shell: bash
