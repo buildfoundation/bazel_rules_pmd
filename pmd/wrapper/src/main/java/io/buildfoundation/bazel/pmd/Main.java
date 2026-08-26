@@ -111,13 +111,8 @@ public final class Main {
      * @return The value associated with the given argument name or null if the argument is not found.
      */
     private static String getArgument(List<String> inputArgs, String argName) {
-        try {
-            // Get the index of the argument and return the value at the next index.
-            return inputArgs.get(inputArgs.indexOf(argName) + 1);
-        } catch (IndexOutOfBoundsException ignored) {
-            // Return null if the argument is not found or there's no value after it.
-            return null;
-        }
+        int argumentIndex = inputArgs.indexOf(argName);
+        return argumentIndex >= 0 && argumentIndex + 1 < inputArgs.size() ? inputArgs.get(argumentIndex + 1) : null;
     }
 
     /**

@@ -77,3 +77,10 @@ sh_test(
     ],
     data = [":pmd_errorless"],
 )
+
+sh_test(
+    name = "pmd_wrapper_arguments_test",
+    srcs = ["test_wrapper.sh"],
+    args = ["$(rootpath //pmd/wrapper:bin)"],
+    data = ["//pmd/wrapper:bin"],
+)
