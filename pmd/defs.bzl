@@ -69,8 +69,9 @@ def _impl(ctx):
     # Execution-result config
     # inspired by https://github.com/bazelbuild/bazel-skylib/blob/a360c42f3d7c7697c8521ed831ebf94ff4120451/rules/build_test.bzl#L21
     execution_result = ctx.actions.declare_file("{}_execution_result.sh".format(ctx.label.name))
-    outputs.append(execution_result)
-    arguments.add("--execution-result", "{}".format(execution_result.path))
+    pmd_result = ctx.actions.declare_file("{}_pmd_result.sh".format(ctx.label.name))
+    outputs.append(pmd_result)
+    arguments.add("--execution-result", "{}".format(pmd_result.path))
 
     # Run
 
@@ -82,10 +83,26 @@ def _impl(ctx):
         arguments = [java_arguments, arguments],
     )
 
+    report_runfile = _runfile_path(ctx, report_file)
+    pmd_result_runfile = _runfile_path(ctx, pmd_result)
+    ctx.actions.expand_template(
+        template = ctx.file._execution_result_template,
+        output = execution_result,
+        substitutions = {
+            "__PMD_REPORT__": _shell_quote(report_runfile) if ctx.attr.report_format in _text_report_formats else "''",
+            "__PMD_RESULT__": _shell_quote(pmd_result_runfile),
+        },
+        is_executable = True,
+    )
+
+    runfiles = ctx.runfiles(files = [report_file, pmd_result])
+    runfiles = runfiles.merge(ctx.attr._runfiles[DefaultInfo].default_runfiles)
+
     return [
         DefaultInfo(
-            files = depset(outputs),
+            files = depset([report_file, execution_result]),
             executable = execution_result,
+            runfiles = runfiles,
         ),
     ]
 
@@ -97,6 +114,14 @@ def _write_files_list(ctx, files, file_name):
 
     return file
 
+def _runfile_path(ctx, file):
+    if file.short_path.startswith("../"):
+        return file.short_path[3:]
+    return "{}/{}".format(ctx.workspace_name, file.short_path)
+
+def _shell_quote(value):
+    return "'{}'".format(value.replace("'", "'\"'\"'"))
+
 _report_format_extensions = {
     "codeclimate": "json",
     "csv": "csv",
@@ -107,6 +132,8 @@ _report_format_extensions = {
     "xml": "xml",
 }
 
+_text_report_formats = ["text", "textcolor", "textpad"]
+
 pmd_test = rule(
     implementation = _impl,
     attrs = {
@@ -114,6 +141,13 @@ pmd_test = rule(
             default = "//pmd/wrapper:bin",
             executable = True,
             cfg = "exec",
+        ),
+        "_execution_result_template": attr.label(
+            allow_single_file = True,
+            default = "//pmd:execution_result.sh.tpl",
+        ),
+        "_runfiles": attr.label(
+            default = "@rules_shell//shell/runfiles",
         ),
         "srcs": attr.label_list(
             allow_files = True,

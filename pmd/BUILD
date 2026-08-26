@@ -18,4 +18,5 @@ toolchain(
 exports_files([
     "defs.bzl",
     "BUILD.pmd.bazel",
+    "execution_result.sh.tpl",
 ])
