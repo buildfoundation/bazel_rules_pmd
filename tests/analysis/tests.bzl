@@ -51,13 +51,30 @@ def _asserted_input_short_paths(action):
         if not file.short_path.startswith("_middlemen/") and not file.short_path.endswith(".runfiles")
     ])
 
+def _assert_public_files_and_runfiles(env, report, execution_result, pmd_result):
+    target = analysistest.target_under_test(env)
+    default_info = target[DefaultInfo]
+
+    asserts.equals(env, sorted([report, execution_result]), sorted([
+        file.short_path
+        for file in default_info.files.to_list()
+    ]))
+
+    runfile_paths = [
+        file.short_path
+        for file in default_info.default_runfiles.files.to_list()
+    ]
+    asserts.true(env, report in runfile_paths)
+    asserts.true(env, execution_result in runfile_paths)
+    asserts.true(env, pmd_result in runfile_paths)
+
 # Action full contents test
 
 def _action_full_contents_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = analysistest.target_actions(env)
-    asserts.equals(env, 8, len(actions))
+    asserts.equals(env, 9, len(actions))
 
     # Action: writing file "srcs.txt"
 
@@ -118,7 +135,7 @@ def _action_full_contents_test_impl(ctx):
     assert_argv_contains(env, action, "--threads")
     assert_argv_contains(env, action, "42")
     assert_argv_contains(env, action, "--execution-result")
-    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_full_execution_result.sh"))
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_full_pmd_result.sh"))
 
     expected_inputs = _expand_paths(env.ctx, [
         "{{source_dir}}/srcs_test_target_full.txt",
@@ -135,11 +152,26 @@ def _action_full_contents_test_impl(ctx):
 
     expected_outputs = _expand_paths(env.ctx, [
         "{{source_dir}}/test_target_full_pmd_report.html",
-        "{{source_dir}}/test_target_full_execution_result.sh",
+        "{{source_dir}}/test_target_full_pmd_result.sh",
     ])
 
     asserts.equals(env, sorted(expected_inputs), _asserted_input_short_paths(action))
     asserts.equals(env, sorted(expected_outputs), sorted([file.short_path for file in action.outputs.to_list()]))
+
+    # Action: public execution result launcher
+
+    action_launcher = actions[3]
+    asserts.equals(env, "TemplateExpand", action_launcher.mnemonic)
+    asserts.equals(env, [
+        "tests/analysis/test_target_full_execution_result.sh",
+    ], [file.short_path for file in action_launcher.outputs.to_list()])
+    asserts.equals(env, ["pmd/execution_result.sh.tpl"], _asserted_input_short_paths(action_launcher))
+    _assert_public_files_and_runfiles(
+        env,
+        "tests/analysis/test_target_full_pmd_report.html",
+        "tests/analysis/test_target_full_execution_result.sh",
+        "tests/analysis/test_target_full_pmd_result.sh",
+    )
 
     return analysistest.end(env)
 
@@ -171,7 +203,7 @@ def _action_blank_contents_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = analysistest.target_actions(env)
-    asserts.equals(env, 7, len(actions))
+    asserts.equals(env, 8, len(actions))
 
     # Action: writing file "srcs.txt"
 
@@ -210,7 +242,7 @@ def _action_blank_contents_test_impl(ctx):
     assert_argv_contains(env, action, "--threads")
     assert_argv_contains(env, action, "1")
     assert_argv_contains(env, action, "--execution-result")
-    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_blank_execution_result.sh"))
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_blank_pmd_result.sh"))
 
     expected_inputs = _expand_paths(env.ctx, [
         "{{source_dir}}/srcs_test_target_blank.txt",
@@ -224,11 +256,26 @@ def _action_blank_contents_test_impl(ctx):
 
     expected_outputs = _expand_paths(env.ctx, [
         "{{source_dir}}/test_target_blank_pmd_report.txt",
-        "{{source_dir}}/test_target_blank_execution_result.sh",
+        "{{source_dir}}/test_target_blank_pmd_result.sh",
     ])
 
     asserts.equals(env, sorted(expected_inputs), _asserted_input_short_paths(action))
     asserts.equals(env, sorted(expected_outputs), sorted([file.short_path for file in action.outputs.to_list()]))
+
+    # Action: public execution result launcher
+
+    action_launcher = actions[2]
+    asserts.equals(env, "TemplateExpand", action_launcher.mnemonic)
+    asserts.equals(env, [
+        "tests/analysis/test_target_blank_execution_result.sh",
+    ], [file.short_path for file in action_launcher.outputs.to_list()])
+    asserts.equals(env, ["pmd/execution_result.sh.tpl"], _asserted_input_short_paths(action_launcher))
+    _assert_public_files_and_runfiles(
+        env,
+        "tests/analysis/test_target_blank_pmd_report.txt",
+        "tests/analysis/test_target_blank_execution_result.sh",
+        "tests/analysis/test_target_blank_pmd_result.sh",
+    )
 
     return analysistest.end(env)
 

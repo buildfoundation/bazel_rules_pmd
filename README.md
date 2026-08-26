@@ -83,5 +83,8 @@ Register it from `MODULE.bazel` with `register_toolchains("//:pmd_toolchain")`.
 ### Execution
 
 ```console
-$ bazel build //YOUR_PACKAGE:pmd_analysis
+$ bazel test //YOUR_PACKAGE:pmd_analysis_test
 ```
+
+Human-readable PMD reports are replayed in the test log, including when the PMD
+build action is cached. All reports remain available as build outputs.
