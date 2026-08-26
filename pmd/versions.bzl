@@ -1,7 +1,7 @@
 """PMD release definitions."""
 
 _DEFAULT_URL_TEMPLATES = [
-    "https://github.com/pmd/pmd/releases/download/pmd_releases/{version}/pmd-bin-{version}.zip",
+    "https://github.com/pmd/pmd/releases/download/pmd_releases/{version}/pmd-dist-{version}-bin.zip",
 ]
 
 def pmd_version(version, sha256, url_templates = None):
@@ -23,6 +23,6 @@ def pmd_version(version, sha256, url_templates = None):
     )
 
 DEFAULT_PMD_RELEASE = pmd_version(
-    version = "6.55.0",
-    sha256 = "21acf96d43cb40d591cacccc1c20a66fc796eaddf69ea61812594447bac7a11d",
+    version = "7.26.0",
+    sha256 = "9f55cb7ff0e9f9a66dd2f005eaa370e84c8a4cd971b134aa14a930c4a283ebc9",
 )

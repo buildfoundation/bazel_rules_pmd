@@ -21,6 +21,12 @@ case "${report_extension}" in
     txt|textcolor|textpad)
         cmp "${report_file}" "${output_file}"
         ;;
+    sarif)
+        test -s "${report_file}"
+        grep -Fq '"version": "2.1.0"' "${report_file}"
+        grep -Fq '"ruleId": "AbstractClassWithoutAbstractMethod"' "${report_file}"
+        test ! -s "${output_file}"
+        ;;
     *)
         test ! -s "${output_file}"
         ;;
