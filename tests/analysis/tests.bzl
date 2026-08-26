@@ -3,7 +3,7 @@ The rule analysis tests.
 """
 
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
-load("//pmd:defs.bzl", "pmd_test")
+load("//pmd:defs.bzl", "pmd", "pmd_test")
 load("//pmd:versions.bzl", "DEFAULT_PMD_RELEASE", "pmd_version")
 
 def _expand_path(ctx, value):
@@ -135,7 +135,7 @@ def _action_full_contents_test_impl(ctx):
     assert_argv_contains(env, action, "--threads")
     assert_argv_contains(env, action, "42")
     assert_argv_contains(env, action, "--execution-result")
-    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_full_pmd_result.sh"))
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_full_pmd_result.txt"))
 
     expected_inputs = _expand_paths(env.ctx, [
         "{{source_dir}}/srcs_test_target_full.txt",
@@ -152,7 +152,7 @@ def _action_full_contents_test_impl(ctx):
 
     expected_outputs = _expand_paths(env.ctx, [
         "{{source_dir}}/test_target_full_pmd_report.html",
-        "{{source_dir}}/test_target_full_pmd_result.sh",
+        "{{source_dir}}/test_target_full_pmd_result.txt",
     ])
 
     asserts.equals(env, sorted(expected_inputs), _asserted_input_short_paths(action))
@@ -170,7 +170,7 @@ def _action_full_contents_test_impl(ctx):
         env,
         "tests/analysis/test_target_full_pmd_report.html",
         "tests/analysis/test_target_full_execution_result.sh",
-        "tests/analysis/test_target_full_pmd_result.sh",
+        "tests/analysis/test_target_full_pmd_result.txt",
     )
 
     return analysistest.end(env)
@@ -241,7 +241,7 @@ def _action_blank_contents_test_impl(ctx):
     assert_argv_contains(env, action, "--threads")
     assert_argv_contains(env, action, "1")
     assert_argv_contains(env, action, "--execution-result")
-    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_blank_pmd_result.sh"))
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_blank_pmd_result.txt"))
 
     expected_inputs = _expand_paths(env.ctx, [
         "{{source_dir}}/srcs_test_target_blank.txt",
@@ -255,7 +255,7 @@ def _action_blank_contents_test_impl(ctx):
 
     expected_outputs = _expand_paths(env.ctx, [
         "{{source_dir}}/test_target_blank_pmd_report.txt",
-        "{{source_dir}}/test_target_blank_pmd_result.sh",
+        "{{source_dir}}/test_target_blank_pmd_result.txt",
     ])
 
     asserts.equals(env, sorted(expected_inputs), _asserted_input_short_paths(action))
@@ -273,7 +273,7 @@ def _action_blank_contents_test_impl(ctx):
         env,
         "tests/analysis/test_target_blank_pmd_report.txt",
         "tests/analysis/test_target_blank_execution_result.sh",
-        "tests/analysis/test_target_blank_pmd_result.sh",
+        "tests/analysis/test_target_blank_pmd_result.txt",
     )
 
     return analysistest.end(env)
@@ -291,6 +291,58 @@ def _test_action_blank_contents():
     action_blank_contents_test(
         name = "action_blank_contents_test",
         target_under_test = ":test_target_blank",
+    )
+
+# Build rule contents test
+
+def _action_build_contents_test_impl(ctx):
+    env = analysistest.begin(ctx)
+
+    actions = analysistest.target_actions(env)
+    pmd_actions = [action for action in actions if action.mnemonic == "PMD"]
+    asserts.equals(env, 1, len(pmd_actions))
+
+    action = pmd_actions[0]
+    assert_argv_contains(env, action, "check")
+    assert_argv_contains(env, action, "--report-file")
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/pmd_target_build_pmd_report.txt"))
+    asserts.equals(env, [], [arg for arg in action.argv if arg == "--execution-result"])
+    asserts.equals(env, 0, len([action for action in actions if action.mnemonic == "TemplateExpand"]))
+
+    expected_inputs = _expand_paths(env.ctx, [
+        "{{source_dir}}/srcs_pmd_target_build.txt",
+        "{{source_dir}}/path A.kt",
+        "{{source_dir}}/rulesets.xml",
+        "pmd/wrapper/bin",
+        "pmd/wrapper/bin.jar",
+    ])
+    expected_outputs = _expand_paths(env.ctx, [
+        "{{source_dir}}/pmd_target_build_pmd_report.txt",
+    ])
+
+    asserts.equals(env, sorted(expected_inputs), _asserted_input_short_paths(action))
+    asserts.equals(env, sorted(expected_outputs), sorted([file.short_path for file in action.outputs.to_list()]))
+
+    default_info = analysistest.target_under_test(env)[DefaultInfo]
+    asserts.equals(env, sorted(expected_outputs), sorted([file.short_path for file in default_info.files.to_list()]))
+    asserts.equals(env, None, default_info.files_to_run.executable)
+    asserts.equals(env, [], [file.short_path for file in default_info.default_runfiles.files.to_list()])
+
+    return analysistest.end(env)
+
+action_build_contents_test = analysistest.make(_action_build_contents_test_impl)
+
+def _test_action_build_contents():
+    pmd(
+        name = "pmd_target_build",
+        srcs = ["path A.kt"],
+        rulesets = ["rulesets.xml"],
+        tags = ["manual"],
+    )
+
+    action_build_contents_test(
+        name = "action_build_contents_test",
+        target_under_test = ":pmd_target_build",
     )
 
 # Action custom JVM flags test
@@ -403,6 +455,7 @@ def test_suite(name):
     """
     _test_action_full_contents()
     _test_action_blank_contents()
+    _test_action_build_contents()
     _test_action_language_alias("vf", "visualforce")
     _test_action_language_alias("vm", "velocity")
     action_custom_jvm_flags_test(
@@ -416,6 +469,7 @@ def test_suite(name):
         tests = [
             ":action_full_contents_test",
             ":action_blank_contents_test",
+            ":action_build_contents_test",
             ":action_language_alias_vf_test",
             ":action_language_alias_vm_test",
             ":action_custom_jvm_flags_test",

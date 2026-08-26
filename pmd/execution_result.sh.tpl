@@ -28,4 +28,5 @@ if [[ -n __PMD_REPORT__ ]]; then
   fi
 fi
 
-exec bash "${pmd_result}"
+pmd_exit_code="$(<"${pmd_result}")"
+exit "${pmd_exit_code}"

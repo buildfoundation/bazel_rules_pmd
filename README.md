@@ -18,7 +18,13 @@ Please refer to [GitHub releases](https://github.com/buildfoundation/bazel_rules
 Once declared in the `MODULE.bazel` file, the rule can be loaded in the `BUILD` file.
 
 ```starlark
-load("@rules_pmd//pmd:defs.bzl", "pmd_test")
+load("@rules_pmd//pmd:defs.bzl", "pmd", "pmd_test")
+
+pmd(
+    name = "pmd_analysis",
+    srcs = glob(["src/main/java/**/*.java"]),
+    rulesets = ["pmd_ruleset.xml"],
+)
 
 pmd_test(
     name = "pmd_analysis_test",
@@ -89,9 +95,21 @@ Register it from `MODULE.bazel` with `register_toolchains("//:pmd_toolchain")`.
 
 ### Execution
 
+Use `pmd` for a build-time analysis whose report is the target output.
+
+By default, violations fail the build; set `fail_on_violation = False` to keep
+the report while allowing violations.
+
+```console
+$ bazel build //YOUR_PACKAGE:pmd_analysis
+```
+
+Use `pmd_test` to run analysis as a test. Violations are replayed in the test
+log and reported through the test result:
+
 ```console
 $ bazel test //YOUR_PACKAGE:pmd_analysis_test
 ```
 
-Human-readable PMD reports are replayed in the test log, including when the PMD
-build action is cached. All reports remain available as build outputs.
+Human-readable PMD reports are replayed in the `pmd_test` log, including when
+the PMD build action is cached. All reports remain available as build outputs.
