@@ -2,9 +2,17 @@
 PMD rule source code.
 """
 
+TOOLCHAIN_TYPE = Label("//pmd:toolchain_type")
+
 def _impl(ctx):
     inputs = []
     outputs = []
+
+    java_arguments = ctx.actions.args()
+
+    for jvm_flag in ctx.toolchains[TOOLCHAIN_TYPE].jvm_flags:
+        # The Bazel-generated execution script requires "=" between argument names and values.
+        java_arguments.add("--jvm_flag={}".format(jvm_flag))
 
     arguments = ctx.actions.args()
 
@@ -71,7 +79,7 @@ def _impl(ctx):
         executable = ctx.executable._executable,
         inputs = inputs,
         outputs = outputs,
-        arguments = [arguments],
+        arguments = [java_arguments, arguments],
     )
 
     return [
@@ -155,5 +163,6 @@ pmd_test = rule(
         ),
     },
     provides = [DefaultInfo],
+    toolchains = [TOOLCHAIN_TYPE],
     test = True,
 )
