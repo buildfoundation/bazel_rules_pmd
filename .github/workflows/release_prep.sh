@@ -12,13 +12,11 @@ TAG=${GITHUB_REF_NAME}
 PREFIX="bazel_rules_pmd-${TAG:1}"
 ARCHIVE="bazel_rules_pmd-$TAG.tar.gz"
 git archive --format=tar --prefix=${PREFIX}/ ${TAG} | gzip > $ARCHIVE
-SHA=$(shasum -a 256 $ARCHIVE | awk '{print $1}')
 
 cat << EOF
-## Using Bzlmod with Bazel 6
+## Using Bzlmod
 
-1. Enable with \`common --enable_bzlmod\` in \`.bazelrc\`.
-2. Add to your \`MODULE.bazel\` file:
+Add to your \`MODULE.bazel\` file:
 
 \`\`\`starlark
 bazel_dep(name = "rules_pmd", version = "${TAG:1}")
