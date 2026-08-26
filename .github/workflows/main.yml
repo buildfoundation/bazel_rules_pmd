@@ -26,7 +26,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
         bazel_version: ["8.x", "9.x", "rolling"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
@@ -48,10 +48,11 @@ jobs:
           disk-cache: true
           repository-cache: true
       - name: "Unit tests"
-        run: bazel test //...
+        run: bazel test --test_output=errors //...
       - name: "Downstream smoke test"
+        if: ${{ !cancelled() }}
         working-directory: e2e/smoke
-        run: bazel test --lockfile_mode=off //...
+        run: bazel test --test_output=errors --lockfile_mode=off //...
       - name: Verify MODULE.bazel.lock is unchanged
         if: ${{ always() && matrix.bazel_version == '9.x' }}
         shell: bash

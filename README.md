@@ -179,3 +179,10 @@ $ bazel test //YOUR_PACKAGE:pmd_analysis_test
 
 Human-readable PMD reports are replayed in the `pmd_test` log, including when
 the PMD build action is cached. All reports remain available as build outputs. SARIF artifact locations are relative to the Bazel execution root.
+
+### Windows
+
+PMD test execution requires Bash on Windows, discoverable on `PATH`. See
+[Bazel's Windows installation
+documentation](https://bazel.build/install/windows) for setup. CI covers Linux
+and Windows across Bazel 8.x, 9.x, and rolling.

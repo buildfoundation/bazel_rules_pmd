@@ -21,11 +21,11 @@ toolchain(
 # Uses the registered toolchain's default_config.
 pmd(
     name = "smoke_build",
-    srcs = ["Smoke.java"],
+    srcs = ["src with spaces/Smoke.java"],
 )
 
 pmd_test(
     name = "smoke_test",
-    srcs = ["Smoke.java"],
+    srcs = ["src with spaces/Smoke.java"],
     config = ":smoke_config",
 )
