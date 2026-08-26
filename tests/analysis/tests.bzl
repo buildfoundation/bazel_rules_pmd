@@ -188,6 +188,7 @@ def _action_blank_contents_test_impl(ctx):
 
     action = actions[1]
 
+    asserts.equals(env, [], [arg for arg in action.argv if arg.startswith("--jvm_flag")])
     assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/pmd/wrapper/bin")
     assert_argv_contains(env, action, "--file-list")
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_test_target_blank.txt"))
@@ -246,6 +247,32 @@ def _test_action_blank_contents():
         target_under_test = ":test_target_blank",
     )
 
+# Action custom JVM flags test
+
+def _action_custom_jvm_flags_test_impl(ctx):
+    env = analysistest.begin(ctx)
+
+    actions = analysistest.target_actions(env)
+    pmd_actions = [action for action in actions if action.mnemonic == "PMD"]
+    asserts.equals(env, 1, len(pmd_actions))
+
+    action = pmd_actions[0]
+    asserts.equals(env, [
+        "--jvm_flag=-Xms16m",
+        "--jvm_flag=-Dexample.property=value with spaces",
+        "--jvm_flag=-Xmx128m",
+    ], action.argv[1:4])
+    asserts.equals(env, "--file-list", action.argv[4])
+
+    return analysistest.end(env)
+
+action_custom_jvm_flags_test = analysistest.make(
+    _action_custom_jvm_flags_test_impl,
+    config_settings = {
+        "//command_line_option:extra_toolchains": ["//tests/analysis:custom_toolchain"],
+    },
+)
+
 # PMD version URL templates test
 
 def _pmd_version_test_impl(ctx):
@@ -278,8 +305,17 @@ pmd_version_test = unittest.make(_pmd_version_test_impl)
 # Suite
 
 def test_suite(name):
+    """Create PMD rule analysis and version tests.
+
+    Args:
+      name: Name of the test suite.
+    """
     _test_action_full_contents()
     _test_action_blank_contents()
+    action_custom_jvm_flags_test(
+        name = "action_custom_jvm_flags_test",
+        target_under_test = ":test_target_blank",
+    )
     pmd_version_test(name = "pmd_version_test")
 
     native.test_suite(
@@ -287,6 +323,7 @@ def test_suite(name):
         tests = [
             ":action_full_contents_test",
             ":action_blank_contents_test",
+            ":action_custom_jvm_flags_test",
             ":pmd_version_test",
         ],
     )

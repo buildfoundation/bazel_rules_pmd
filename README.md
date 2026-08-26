@@ -58,6 +58,28 @@ Each template may contain `{version}`, which is replaced with the selected PMD v
 
 See [available attributes](docs/rule.md).
 
+#### JVM Flags
+
+The default PMD toolchain supplies no JVM flags, preserving the Java runtime defaults. To configure flags, define and register a custom toolchain:
+
+```starlark
+# BUILD
+load("@rules_pmd//pmd:toolchain.bzl", "pmd_toolchain")
+
+pmd_toolchain(
+    name = "pmd_toolchain_impl",
+    jvm_flags = ["-Xmx1g", "-Dexample.property=value"],
+)
+
+toolchain(
+    name = "pmd_toolchain",
+    toolchain = ":pmd_toolchain_impl",
+    toolchain_type = "@rules_pmd//pmd:toolchain_type",
+)
+```
+
+Register it from `MODULE.bazel` with `register_toolchains("//:pmd_toolchain")`.
+
 ### Execution
 
 ```console

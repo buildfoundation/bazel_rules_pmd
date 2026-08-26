@@ -5,6 +5,8 @@ module(
     repo_name = "bazel_rules_pmd",
 )
 
+register_toolchains("//pmd:default_toolchain")
+
 pmd = use_extension("//pmd:extensions.bzl", "pmd")
 use_repo(pmd, "net_sourceforge_pmd")
 
