@@ -18,7 +18,7 @@ def _impl(ctx):
         inputs.extend(ctx.files.srcs)
 
     if len(ctx.files.srcs_ignore) != 0:
-        srcs_ignore_file = _write_files_list(ctx, ctx.files.srcs, "srcs_ignore_{}.txt".format(ctx.label.name))
+        srcs_ignore_file = _write_files_list(ctx, ctx.files.srcs_ignore, "srcs_ignore_{}.txt".format(ctx.label.name))
         arguments.add("--ignore-list", srcs_ignore_file)
 
         inputs.append(srcs_ignore_file)
