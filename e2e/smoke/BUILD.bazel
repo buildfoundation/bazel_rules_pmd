@@ -2,6 +2,6 @@ load("@rules_pmd//pmd:defs.bzl", "pmd_test")
 
 pmd_test(
     name = "smoke_test",
-    srcs = ["Smoke.java"],
+    srcs = ["src with spaces/Smoke.java"],
     rulesets = ["pmd_ruleset.xml"],
 )
