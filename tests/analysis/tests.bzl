@@ -4,6 +4,7 @@ The rule analysis tests.
 
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts", "unittest")
 load("//pmd:defs.bzl", "pmd_test")
+load("//pmd:versions.bzl", "DEFAULT_PMD_RELEASE", "pmd_version")
 
 def _expand_path(ctx, value):
     source_dir = ctx.build_file_path.replace("/BUILD", "")
@@ -245,16 +246,47 @@ def _test_action_blank_contents():
         target_under_test = ":test_target_blank",
     )
 
+# PMD version URL templates test
+
+def _pmd_version_test_impl(ctx):
+    env = unittest.begin(ctx)
+
+    default_urls = [
+        "https://github.com/pmd/pmd/releases/download/pmd_releases/{version}/pmd-bin-{version}.zip",
+    ]
+    original = pmd_version("1.2.3", "original-sha")
+    explicit_none = pmd_version("1.2.3", "original-sha", None)
+    custom_urls = [
+        "https://mirror.example.com/pmd/{version}.zip",
+        "https://backup.example.com/pmd/pmd-{version}.zip",
+    ]
+    custom = pmd_version("7.0.0", "custom-sha", custom_urls)
+
+    asserts.equals(env, default_urls, original.url_templates)
+    asserts.equals(env, default_urls, explicit_none.url_templates)
+    asserts.equals(env, "7.0.0", custom.version)
+    asserts.equals(env, "custom-sha", custom.sha256)
+    asserts.equals(env, custom_urls, custom.url_templates)
+    asserts.equals(env, "6.55.0", DEFAULT_PMD_RELEASE.version)
+    asserts.equals(env, "21acf96d43cb40d591cacccc1c20a66fc796eaddf69ea61812594447bac7a11d", DEFAULT_PMD_RELEASE.sha256)
+    asserts.equals(env, default_urls, DEFAULT_PMD_RELEASE.url_templates)
+
+    return unittest.end(env)
+
+pmd_version_test = unittest.make(_pmd_version_test_impl)
+
 # Suite
 
 def test_suite(name):
     _test_action_full_contents()
     _test_action_blank_contents()
+    pmd_version_test(name = "pmd_version_test")
 
     native.test_suite(
         name = name,
         tests = [
             ":action_full_contents_test",
             ":action_blank_contents_test",
+            ":pmd_version_test",
         ],
     )

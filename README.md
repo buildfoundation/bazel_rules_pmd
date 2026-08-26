@@ -31,13 +31,30 @@ pmd_test(
 Change the `MODULE.bazel` file:
 
 ```python
-pmd = use_extension("//pmd:extensions.bzl", "pmd")
+pmd = use_extension("@rules_pmd//pmd:extensions.bzl", "pmd")
 pmd.pmd_version(
     version = "x.x.x",
     sha256 = "x.x.x.sha256",
 )
 use_repo(pmd, "net_sourceforge_pmd")
 ```
+
+To download PMD from a custom location (for example, an internal mirror), provide a `url_templates` list:
+
+```python
+pmd = use_extension("@rules_pmd//pmd:extensions.bzl", "pmd")
+pmd.pmd_version(
+    version = "x.x.x",
+    sha256 = "x.x.x.sha256",
+    url_templates = [
+        "https://my-mirror.example.com/pmd/pmd-bin-{version}.zip",
+        "https://backup.example.com/pmd/pmd-bin-{version}.zip",
+    ],
+)
+use_repo(pmd, "net_sourceforge_pmd")
+```
+
+Each template may contain `{version}`, which is replaced with the selected PMD version. Supplying a non-empty list replaces the default GitHub URL; omitting `url_templates`, or passing an empty list, uses that default. Custom URLs must provide the same pinned PMD distribution archive layout (`pmd-bin-{version}/lib`) and the `sha256` of that archive.
 
 See [available attributes](docs/rule.md).
 

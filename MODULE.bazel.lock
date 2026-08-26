@@ -195,7 +195,7 @@
   "moduleExtensions": {
     "//pmd:extensions.bzl%pmd": {
       "general": {
-        "bzlTransitiveDigest": "NRECz7wFrOyPmdFKeOcTzJJSNW7Tfz/Y+AOqqMfo3Rw=",
+        "bzlTransitiveDigest": "EI521Kh5xECF+6oP3utw/FdI+zoxqtLD1zmBhMGxN1s=",
         "usagesDigest": "trQm7+xfAVOGdK0XpZ4as9UqqePv7mpb5UP38pHp9SU=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
