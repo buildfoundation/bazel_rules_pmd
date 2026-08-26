@@ -52,6 +52,9 @@ jobs:
       - name: "Downstream smoke test"
         working-directory: e2e/smoke
         run: bazel test --lockfile_mode=off //...
+      - name: "Downstream smoke test (manifest-only runfiles)"
+        working-directory: e2e/smoke
+        run: bazel test --lockfile_mode=off --enable_runfiles=no //:smoke_test
       - name: Verify MODULE.bazel.lock is unchanged
         if: ${{ always() && matrix.bazel_version == '9.x' }}
         shell: bash

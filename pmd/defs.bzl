@@ -75,6 +75,10 @@ def _impl(ctx):
 
     # Run
 
+    files_to_run = ctx.attr._wrapper_runfiles_manifest[DefaultInfo].files_to_run
+    if files_to_run != None and files_to_run.runfiles_manifest != None:
+        inputs.append(files_to_run.runfiles_manifest)
+
     ctx.actions.run(
         mnemonic = "PMD",
         executable = ctx.executable._executable,
@@ -148,6 +152,10 @@ pmd_test = rule(
         ),
         "_runfiles": attr.label(
             default = "@rules_shell//shell/runfiles",
+        ),
+        "_wrapper_runfiles_manifest": attr.label(
+            default = "//pmd:wrapper_runfiles_manifest",
+            cfg = "exec",
         ),
         "srcs": attr.label_list(
             allow_files = True,
