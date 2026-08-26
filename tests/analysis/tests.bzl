@@ -68,6 +68,11 @@ def _action_full_contents_test_impl(ctx):
     action_write_file_srcs_outputs_actual = [file.path for file in action_write_file_srcs.outputs.to_list()]
 
     asserts.equals(env, action_write_file_srcs_outputs_expected, action_write_file_srcs_outputs_actual)
+    asserts.equals(env, ",".join(_expand_paths(env.ctx, [
+        "{{source_dir}}/path A.kt",
+        "{{source_dir}}/path B.kt",
+        "{{source_dir}}/path C.kt",
+    ])), action_write_file_srcs.content)
 
     # Action: writing file "srcs_ignore.txt"
 
@@ -79,6 +84,10 @@ def _action_full_contents_test_impl(ctx):
     action_write_file_srcs_ignore_ouptuts_actual = [file.path for file in action_write_file_srcs_ignore.outputs.to_list()]
 
     asserts.equals(env, action_write_file_srcs_ignore_ouptuts_expected, action_write_file_srcs_ignore_ouptuts_actual)
+    asserts.equals(env, ",".join(_expand_paths(env.ctx, [
+        "{{source_dir}}/path D.kt",
+        "{{source_dir}}/path E.kt",
+    ])), action_write_file_srcs_ignore.content)
 
     # Action: PMD
 
