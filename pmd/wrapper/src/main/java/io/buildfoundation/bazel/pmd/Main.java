@@ -18,7 +18,7 @@ public final class Main {
 
     /**
      * Entry point of the application.
-     * Processes input arguments, runs PMD, prints errors, and writes the execution result to a file.
+     * Processes input arguments, runs PMD, prints errors, and optionally writes the execution result to a file.
      */
     public static void main(String[] args) {
         List<String> inputArgs = Arrays.asList(args);
@@ -35,9 +35,12 @@ public final class Main {
             printError(pmdArgs);
         }
 
-        writeExecutionResultToFile(result, executionResultOutputPath);
+        if (executionResultOutputPath != null) {
+            writeExecutionResultToFile(result, executionResultOutputPath);
+            System.exit(0);
+        }
 
-        System.exit(0);
+        System.exit(result);
     }
 
     /**
@@ -60,7 +63,7 @@ public final class Main {
      */
     private static void writeExecutionResultToFile(int statusCode, String executionResultOutputPath) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(executionResultOutputPath))) {
-            writer.write(String.format("#!/bin/bash\n\nexit %d\n", statusCode));
+            writer.write(statusCode + "\n");
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -72,7 +75,7 @@ public final class Main {
      */
     private static String getExecutionResultOutputPath(List<String> inputArgs) {
         String outputPath = getArgument(inputArgs, "--execution-result");
-        if (outputPath == null) {
+        if (outputPath == null && inputArgs.contains("--execution-result")) {
             System.exit(1);
         }
         return outputPath;

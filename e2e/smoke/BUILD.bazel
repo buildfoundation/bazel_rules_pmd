@@ -1,4 +1,10 @@
-load("@rules_pmd//pmd:defs.bzl", "pmd_test")
+load("@rules_pmd//pmd:defs.bzl", "pmd", "pmd_test")
+
+pmd(
+    name = "smoke_build",
+    srcs = ["Smoke.java"],
+    rulesets = ["pmd_ruleset.xml"],
+)
 
 pmd_test(
     name = "smoke_test",

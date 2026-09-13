@@ -1,5 +1,42 @@
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load("//pmd:defs.bzl", "pmd_test")
+load("//pmd:defs.bzl", "pmd", "pmd_test")
+
+pmd(
+    name = "pmd_build_clean",
+    srcs = glob(["src/main/java/**/*.java"]),
+    report_format = "text",
+    rulesets = ["pmd_rulesets_errorless.xml"],
+    srcs_language_version = "1.8",
+)
+
+pmd(
+    name = "pmd_build_no_fail",
+    srcs = glob(["src/main/java/**/*.java"]),
+    fail_on_violation = False,
+    report_format = "text",
+    rulesets = ["pmd_rulesets_error.xml"],
+)
+
+sh_test(
+    name = "pmd_build_reports_test",
+    srcs = ["test_pmd_report.sh"],
+    args = [
+        "$(rootpath :pmd_build_clean)",
+        "$(rootpath :pmd_build_no_fail)",
+    ],
+    data = [
+        ":pmd_build_clean",
+        ":pmd_build_no_fail",
+    ],
+)
+
+pmd(
+    name = "pmd_error_build_failure",
+    srcs = glob(["src/main/java/**/*.java"]),
+    report_format = "text",
+    rulesets = ["pmd_rulesets_error.xml"],
+    tags = ["manual"],
+)
 
 pmd_test(
     name = "pmd_error",

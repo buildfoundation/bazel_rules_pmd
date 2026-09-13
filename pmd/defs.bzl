@@ -1,5 +1,5 @@
 """
-PMD rule source code.
+PMD build and test rules.
 """
 
 TOOLCHAIN_TYPE = Label("//pmd:toolchain_type")
@@ -9,7 +9,7 @@ _LANGUAGE_ALIASES = {
     "vm": "velocity",
 }
 
-def _impl(ctx):
+def _impl(ctx, is_test):
     inputs = []
     outputs = []
 
@@ -75,12 +75,15 @@ def _impl(ctx):
     arguments.add("--no-progress")
     arguments.add("--threads", ctx.attr.threads_count)
 
-    # Execution-result config
-    # inspired by https://github.com/bazelbuild/bazel-skylib/blob/a360c42f3d7c7697c8521ed831ebf94ff4120451/rules/build_test.bzl#L21
-    execution_result = ctx.actions.declare_file("{}_execution_result.sh".format(ctx.label.name))
-    pmd_result = ctx.actions.declare_file("{}_pmd_result.sh".format(ctx.label.name))
-    outputs.append(pmd_result)
-    arguments.add("--execution-result", "{}".format(pmd_result.path))
+    execution_result = None
+    pmd_result = None
+    if is_test:
+        # Execution-result config
+        # inspired by https://github.com/bazelbuild/bazel-skylib/blob/a360c42f3d7c7697c8521ed831ebf94ff4120451/rules/build_test.bzl#L21
+        execution_result = ctx.actions.declare_file("{}_execution_result.sh".format(ctx.label.name))
+        pmd_result = ctx.actions.declare_file("{}_pmd_result.txt".format(ctx.label.name))
+        outputs.append(pmd_result)
+        arguments.add("--execution-result", "{}".format(pmd_result.path))
 
     # Run
 
@@ -91,6 +94,9 @@ def _impl(ctx):
         outputs = outputs,
         arguments = [java_arguments, arguments],
     )
+
+    if not is_test:
+        return [DefaultInfo(files = depset([report_file]))]
 
     report_runfile = _runfile_path(ctx, report_file)
     pmd_result_runfile = _runfile_path(ctx, pmd_result)
@@ -144,68 +150,83 @@ _report_format_extensions = {
 
 _text_report_formats = ["text", "textcolor", "textpad"]
 
+_ATTRS = {
+    "_executable": attr.label(
+        default = "//pmd/wrapper:bin",
+        executable = True,
+        cfg = "exec",
+    ),
+    "_execution_result_template": attr.label(
+        allow_single_file = True,
+        default = "//pmd:execution_result.sh.tpl",
+    ),
+    "_runfiles": attr.label(
+        default = "@rules_shell//shell/runfiles",
+    ),
+    "srcs": attr.label_list(
+        allow_files = True,
+        doc = "Source code files.",
+        mandatory = True,
+        allow_empty = False,
+    ),
+    "srcs_ignore": attr.label_list(
+        allow_files = True,
+        default = [],
+        doc = "Source code files to ignore.",
+    ),
+    "srcs_encoding": attr.string(
+        default = "UTF-8",
+        doc = "See [PMD `--encoding` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
+    ),
+    "srcs_language": attr.string(
+        default = "java",
+        values = ["apex", "ecmascript", "java", "jsp", "modelica", "plsql", "scala", "vf", "vm", "xml"],
+        doc = "See [PMD `--force-language` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
+    ),
+    "srcs_language_version": attr.string(
+        doc = "PMD language version (for example, `1.8` for Java); see [PMD `--use-version` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
+    ),
+    "rulesets": attr.label_list(
+        allow_files = True,
+        mandatory = True,
+        allow_empty = False,
+        doc = "Ruleset files.",
+    ),
+    "rules_minimum_priority": attr.int(
+        default = 5,
+        doc = "See [PMD `--minimum-priority` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
+    ),
+    "report_format": attr.string(
+        default = "text",
+        values = ["codeclimate", "csv", "json", "html", "sarif", "summaryhtml", "text", "textcolor", "textpad", "xml"],
+        doc = "See [PMD `--format` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
+    ),
+    "fail_on_violation": attr.bool(
+        default = True,
+        doc = "See [PMD `--fail-on-violation` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
+    ),
+    "threads_count": attr.int(
+        default = 1,
+        doc = "See [PMD `--threads` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
+    ),
+}
+
+def _pmd_impl(ctx):
+    return _impl(ctx, is_test = False)
+
+pmd = rule(
+    implementation = _pmd_impl,
+    attrs = _ATTRS,
+    provides = [DefaultInfo],
+    toolchains = [TOOLCHAIN_TYPE],
+)
+
+def _pmd_test_impl(ctx):
+    return _impl(ctx, is_test = True)
+
 pmd_test = rule(
-    implementation = _impl,
-    attrs = {
-        "_executable": attr.label(
-            default = "//pmd/wrapper:bin",
-            executable = True,
-            cfg = "exec",
-        ),
-        "_execution_result_template": attr.label(
-            allow_single_file = True,
-            default = "//pmd:execution_result.sh.tpl",
-        ),
-        "_runfiles": attr.label(
-            default = "@rules_shell//shell/runfiles",
-        ),
-        "srcs": attr.label_list(
-            allow_files = True,
-            doc = "Source code files.",
-            mandatory = True,
-            allow_empty = False,
-        ),
-        "srcs_ignore": attr.label_list(
-            allow_files = True,
-            default = [],
-            doc = "Source code files to ignore.",
-        ),
-        "srcs_encoding": attr.string(
-            default = "UTF-8",
-            doc = "See [PMD `--encoding` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
-        ),
-        "srcs_language": attr.string(
-            default = "java",
-            values = ["apex", "ecmascript", "java", "jsp", "modelica", "plsql", "scala", "vf", "vm", "xml"],
-            doc = "See [PMD `--force-language` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
-        ),
-        "srcs_language_version": attr.string(
-            doc = "PMD language version (for example, `1.8` for Java); see [PMD `--use-version` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
-        ),
-        "rulesets": attr.label_list(
-            allow_files = True,
-            mandatory = True,
-            allow_empty = False,
-            doc = "Ruleset files.",
-        ),
-        "rules_minimum_priority": attr.int(
-            default = 5,
-            doc = "See [PMD `--minimum-priority` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
-        ),
-        "report_format": attr.string(
-            default = "text",
-            values = ["codeclimate", "csv", "json", "html", "sarif", "summaryhtml", "text", "textcolor", "textpad", "xml"],
-            doc = "See [PMD `--format` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
-        ),
-        "fail_on_violation": attr.bool(
-            default = True,
-            doc = "See [PMD `--fail-on-violation` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
-        ),
-        "threads_count": attr.int(
-            default = 1,
-            doc = "See [PMD `--threads` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
-        ),
-    },
+    implementation = _pmd_test_impl,
+    attrs = _ATTRS,
     provides = [DefaultInfo],
     toolchains = [TOOLCHAIN_TYPE],
     test = True,
