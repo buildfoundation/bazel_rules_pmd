@@ -1,9 +1,11 @@
+load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//pmd:defs.bzl", "pmd", "pmd_test")
 
 pmd(
     name = "pmd_build_clean",
-    srcs = glob(["src/main/java/**/*.java"]),
+    srcs = ["src/main/java/A.java"],
     report_format = "text",
     rulesets = ["pmd_rulesets_errorless.xml"],
     srcs_language_version = "1.8",
@@ -11,23 +13,38 @@ pmd(
 
 pmd(
     name = "pmd_build_no_fail",
-    srcs = glob(["src/main/java/**/*.java"]),
+    srcs = ["src/main/java/A.java"],
     fail_on_violation = False,
     report_format = "text",
     rulesets = ["pmd_rulesets_error.xml"],
 )
 
-sh_test(
-    name = "pmd_build_reports_test",
-    srcs = ["test_pmd_report.sh"],
-    args = [
-        "$(rootpath :pmd_build_clean)",
-        "$(rootpath :pmd_build_no_fail)",
+write_file(
+    name = "pmd_build_clean_report_expected",
+    out = "pmd_build_clean_report_expected.txt",
+    content = [],
+    newline = "unix",
+)
+
+diff_test(
+    name = "pmd_build_clean_report_test",
+    file1 = ":pmd_build_clean_report_expected",
+    file2 = ":pmd_build_clean",
+)
+
+write_file(
+    name = "pmd_build_no_fail_report_expected",
+    out = "pmd_build_no_fail_report_expected.txt",
+    content = [
+        "tests/integration/src/main/java/A.java:1:\tAbstractClassWithoutAbstractMethod:\tThis abstract class does not have any abstract methods\n",
     ],
-    data = [
-        ":pmd_build_clean",
-        ":pmd_build_no_fail",
-    ],
+    newline = "unix",
+)
+
+diff_test(
+    name = "pmd_build_no_fail_report_test",
+    file1 = ":pmd_build_no_fail_report_expected",
+    file2 = ":pmd_build_no_fail",
 )
 
 pmd(
@@ -62,7 +79,6 @@ pmd_test(
     report_format = "text",
     rulesets = ["pmd_rulesets_error.xml"],
     srcs_ignore = ["src/main/java/A.java"],
-    tags = ["manual"],
 )
 
 sh_test(
@@ -103,7 +119,6 @@ pmd_test(
     report_format = "text",
     rulesets = ["pmd_rulesets_errorless.xml"],
     srcs_language_version = "1.8",
-    tags = ["manual"],
 )
 
 sh_test(
@@ -122,7 +137,6 @@ pmd_test(
     fail_on_violation = False,
     report_format = "text",
     rulesets = ["pmd_rulesets_error.xml"],
-    tags = ["manual"],
 )
 
 sh_test(

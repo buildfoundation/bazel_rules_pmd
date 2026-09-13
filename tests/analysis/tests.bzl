@@ -31,6 +31,13 @@ def assert_argv_contains(env, action, flag):
         "Expected {args} to contain {flag}".format(args = action.argv, flag = flag),
     )
 
+def assert_argv_lacks(env, action, flag):
+    asserts.false(
+        env,
+        flag in action.argv,
+        "Expected {args} to not contain {flag}".format(args = action.argv, flag = flag),
+    )
+
 def _expand_paths(ctx, values):
     source_dir = ctx.build_file_path.replace("/BUILD", "")
     output_dir = ctx.bin_dir.path
@@ -236,6 +243,7 @@ def _action_blank_contents_test_impl(ctx):
     assert_argv_contains(env, action, "text")
     assert_argv_contains(env, action, "--report-file")
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_blank_pmd_report.txt"))
+    assert_argv_lacks(env, action, "--no-fail-on-violation")
     assert_argv_contains(env, action, "--no-cache")
     assert_argv_contains(env, action, "--no-progress")
     assert_argv_contains(env, action, "--threads")
@@ -306,6 +314,7 @@ def _action_build_contents_test_impl(ctx):
     assert_argv_contains(env, action, "check")
     assert_argv_contains(env, action, "--report-file")
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/pmd_target_build_pmd_report.txt"))
+    assert_argv_lacks(env, action, "--no-fail-on-violation")
     asserts.equals(env, [], [arg for arg in action.argv if arg == "--execution-result"])
     asserts.equals(env, 0, len([action for action in actions if action.mnemonic == "TemplateExpand"]))
 
@@ -343,6 +352,36 @@ def _test_action_build_contents():
     action_build_contents_test(
         name = "action_build_contents_test",
         target_under_test = ":pmd_target_build",
+    )
+
+# Build rule failure policy test
+
+def _action_build_no_fail_policy_test_impl(ctx):
+    env = analysistest.begin(ctx)
+
+    pmd_actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PMD"]
+    asserts.equals(env, 1, len(pmd_actions))
+
+    action = pmd_actions[0]
+    assert_argv_contains(env, action, "--no-fail-on-violation")
+    assert_argv_lacks(env, action, "--execution-result")
+
+    return analysistest.end(env)
+
+action_build_no_fail_policy_test = analysistest.make(_action_build_no_fail_policy_test_impl)
+
+def _test_action_build_no_fail_policy():
+    pmd(
+        name = "pmd_target_build_no_fail",
+        srcs = ["path A.kt"],
+        fail_on_violation = False,
+        rulesets = ["rulesets.xml"],
+        tags = ["manual"],
+    )
+
+    action_build_no_fail_policy_test(
+        name = "action_build_no_fail_policy_test",
+        target_under_test = ":pmd_target_build_no_fail",
     )
 
 # Action custom JVM flags test
@@ -456,6 +495,7 @@ def test_suite(name):
     _test_action_full_contents()
     _test_action_blank_contents()
     _test_action_build_contents()
+    _test_action_build_no_fail_policy()
     _test_action_language_alias("vf", "visualforce")
     _test_action_language_alias("vm", "velocity")
     action_custom_jvm_flags_test(
@@ -470,6 +510,7 @@ def test_suite(name):
             ":action_full_contents_test",
             ":action_blank_contents_test",
             ":action_build_contents_test",
+            ":action_build_no_fail_policy_test",
             ":action_language_alias_vf_test",
             ":action_language_alias_vm_test",
             ":action_custom_jvm_flags_test",
