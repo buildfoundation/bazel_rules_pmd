@@ -40,6 +40,7 @@ readonly output_end="${test_dir}/result with spaces.sh"
 readonly output_usage="${test_dir}/usage.sh"
 readonly output_version="${test_dir}/version.sh"
 readonly output_violation="${test_dir}/violation result.txt"
+readonly output_missing_ruleset="${test_dir}/missing ruleset.sh"
 readonly spaced_source_dir="${test_dir}/source dir"
 readonly source_list="${test_dir}/source list.txt"
 mkdir -p "${spaced_source_dir}"
@@ -49,6 +50,19 @@ run_wrapper valid_begin 0 --execution-result "${output_begin}" --help
 run_wrapper valid_end 0 --help --execution-result "${output_end}"
 run_wrapper usage_error 0 --execution-result "${output_usage}"
 run_wrapper version 0 --execution-result "${output_version}" --version
+run_wrapper missing_ruleset_direct 1 check \
+    --file-list "${source_list}" \
+    --rulesets "${test_dir}/missing-ruleset.xml" \
+    --format text \
+    --report-file "${test_dir}/missing ruleset.txt" \
+    --no-progress
+run_wrapper missing_ruleset_saved 0 --execution-result "${output_missing_ruleset}" check \
+    --file-list "${source_list}" \
+    --rulesets "${test_dir}/missing-ruleset.xml" \
+    --format text \
+    --report-file "${test_dir}/saved missing ruleset.txt" \
+    --no-progress
+run_wrapper execution_result_write_failure 1 --execution-result "${test_dir}" --help
 run_wrapper direct_violation 4 check \
     --file-list "${source_list}" \
     --rulesets "${ruleset}" \
@@ -66,6 +80,7 @@ assert_saved_result 0 "${output_begin}"
 assert_saved_result 0 "${output_end}"
 assert_saved_result 2 "${output_usage}"
 assert_saved_result 0 "${output_version}"
+assert_saved_result 1 "${output_missing_ruleset}"
 assert_saved_result 4 "${output_violation}"
 grep -Fq "7.26.0" "${test_dir}/version.stdout"
 test -s "${test_dir}/direct violation.txt"
