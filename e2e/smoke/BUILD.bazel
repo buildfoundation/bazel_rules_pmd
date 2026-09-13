@@ -1,13 +1,30 @@
+load("@rules_pmd//pmd:config.bzl", "pmd_config")
 load("@rules_pmd//pmd:defs.bzl", "pmd", "pmd_test")
+load("@rules_pmd//pmd:toolchain.bzl", "pmd_toolchain")
+
+pmd_toolchain(
+    name = "smoke_toolchain",
+    default_config = ":smoke_config",
+)
+
+pmd_config(
+    name = "smoke_config",
+    rulesets = ["pmd_ruleset.xml"],
+)
+
+toolchain(
+    name = "smoke_registered_toolchain",
+    toolchain = ":smoke_toolchain",
+    toolchain_type = "@rules_pmd//pmd:toolchain_type",
+)
 
 pmd(
     name = "smoke_build",
     srcs = ["Smoke.java"],
-    rulesets = ["pmd_ruleset.xml"],
 )
 
 pmd_test(
     name = "smoke_test",
     srcs = ["Smoke.java"],
-    rulesets = ["pmd_ruleset.xml"],
+    config = ":smoke_config",
 )

@@ -3,3 +3,5 @@ local_path_override(
     module_name = "rules_pmd",
     path = "../..",
 )
+
+register_toolchains("//:smoke_registered_toolchain")

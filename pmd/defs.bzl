@@ -2,6 +2,8 @@
 PMD build and test rules.
 """
 
+load(":config.bzl", "PmdConfigInfo")
+
 TOOLCHAIN_TYPE = Label("//pmd:toolchain_type")
 
 _LANGUAGE_ALIASES = {
@@ -13,12 +15,8 @@ def _impl(ctx, is_test):
     inputs = []
     source_lists = []
     outputs = []
-
-    java_arguments = ctx.actions.args()
-
-    for jvm_flag in ctx.toolchains[TOOLCHAIN_TYPE].jvm_flags:
-        # The Bazel-generated execution script requires "=" between argument names and values.
-        java_arguments.add("--jvm_flag={}".format(jvm_flag))
+    pmd_toolchain = ctx.toolchains[TOOLCHAIN_TYPE]
+    config = ctx.attr.config[PmdConfigInfo] if ctx.attr.config != None else pmd_toolchain.default_config
 
     arguments = ctx.actions.args()
     arguments.add("check")
@@ -53,10 +51,13 @@ def _impl(ctx, is_test):
 
     # Rules
 
-    arguments.add_joined("--rulesets", ctx.files.rulesets, join_with = ",")
-    inputs.extend(ctx.files.rulesets)
+    if len(config.rulesets) == 0:
+        fail("PMD configuration selected by {} has no ruleset files; select a populated config or set the toolchain's default_config".format(ctx.label))
 
-    arguments.add("--minimum-priority", ctx.attr.rules_minimum_priority)
+    arguments.add_joined("--rulesets", config.rulesets, join_with = ",")
+    inputs.extend(config.rulesets)
+
+    arguments.add("--minimum-priority", config.rules_minimum_priority)
 
     # Report
 
@@ -72,11 +73,11 @@ def _impl(ctx, is_test):
 
     # Remaining options
 
-    if not ctx.attr.fail_on_violation:
+    if not config.fail_on_violation:
         arguments.add("--no-fail-on-violation")
     arguments.add("--no-cache")
     arguments.add("--no-progress")
-    arguments.add("--threads", ctx.attr.threads_count)
+    arguments.add("--threads", config.threads_count)
 
     execution_result = None
     pmd_result = None
@@ -91,19 +92,20 @@ def _impl(ctx, is_test):
     # Run
 
     stage_args = ctx.actions.args()
-    stage_args.add(ctx.executable._executable)
+    stage_args.add(pmd_toolchain.pmd_wrapper.executable)
     stage_args.add_all(source_lists)
     stage_args.add("--")
-    stage_args.add_all(source_lists + ctx.files.rulesets + outputs)
+    stage_args.add_all(source_lists + config.rulesets + outputs)
     stage_args.add("--")
 
     ctx.actions.run(
         mnemonic = "PMD",
         executable = ctx.file._runner,
-        tools = [ctx.attr._executable[DefaultInfo].files_to_run],
+        tools = [pmd_toolchain.pmd_wrapper],
         inputs = inputs,
         outputs = outputs,
-        arguments = [stage_args, java_arguments, arguments],
+        arguments = [stage_args, arguments],
+        toolchain = TOOLCHAIN_TYPE,
     )
 
     if not is_test:
@@ -166,11 +168,6 @@ _ATTRS = {
         default = "//pmd:run_pmd.sh",
         allow_single_file = True,
     ),
-    "_executable": attr.label(
-        default = "//pmd/wrapper:bin",
-        executable = True,
-        cfg = "exec",
-    ),
     "_execution_result_template": attr.label(
         allow_single_file = True,
         default = "//pmd:execution_result.sh.tpl",
@@ -201,28 +198,15 @@ _ATTRS = {
     "srcs_language_version": attr.string(
         doc = "PMD language version (for example, `1.8` for Java); see [PMD `--use-version` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
     ),
-    "rulesets": attr.label_list(
-        allow_files = True,
-        mandatory = True,
-        allow_empty = False,
-        doc = "Ruleset files.",
-    ),
-    "rules_minimum_priority": attr.int(
-        default = 5,
-        doc = "See [PMD `--minimum-priority` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
-    ),
     "report_format": attr.string(
         default = "text",
         values = ["codeclimate", "csv", "json", "html", "sarif", "summaryhtml", "text", "textcolor", "textpad", "xml"],
         doc = "See [PMD `--format` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
     ),
-    "fail_on_violation": attr.bool(
-        default = True,
-        doc = "See [PMD `--fail-on-violation` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
-    ),
-    "threads_count": attr.int(
-        default = 1,
-        doc = "See [PMD `--threads` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
+    "config": attr.label(
+        default = None,
+        providers = [PmdConfigInfo],
+        doc = "PMD configuration. Replaces the registered toolchain's default_config completely when provided.",
     ),
 }
 
