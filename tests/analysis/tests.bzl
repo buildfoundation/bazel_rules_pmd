@@ -476,8 +476,8 @@ def _pmd_version_test_impl(ctx):
     asserts.equals(env, "7.0.0", custom.version)
     asserts.equals(env, "custom-sha", custom.sha256)
     asserts.equals(env, custom_urls, custom.url_templates)
-    asserts.equals(env, "7.26.0", DEFAULT_PMD_RELEASE.version)
-    asserts.equals(env, "9f55cb7ff0e9f9a66dd2f005eaa370e84c8a4cd971b134aa14a930c4a283ebc9", DEFAULT_PMD_RELEASE.sha256)
+    asserts.equals(env, "7.28.0", DEFAULT_PMD_RELEASE.version)
+    asserts.equals(env, "f974ba571f7bc01c73fffe11bade25fbc1f438698f9e9c00e416e8d65e9fbac2", DEFAULT_PMD_RELEASE.sha256)
     asserts.equals(env, default_urls, DEFAULT_PMD_RELEASE.url_templates)
 
     return unittest.end(env)
