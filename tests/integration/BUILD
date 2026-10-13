@@ -1,22 +1,38 @@
 load("@bazel_skylib//rules:diff_test.bzl", "diff_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//pmd:config.bzl", "pmd_config")
 load("//pmd:defs.bzl", "pmd", "pmd_test")
+
+pmd_config(
+    name = "pmd_error_config",
+    rulesets = ["pmd_rulesets_error.xml"],
+)
+
+pmd_config(
+    name = "pmd_errorless_config",
+    rulesets = ["pmd_rulesets_errorless.xml"],
+)
+
+pmd_config(
+    name = "pmd_error_no_fail_config",
+    fail_on_violation = False,
+    rulesets = ["pmd_rulesets_error.xml"],
+)
 
 pmd(
     name = "pmd_build_clean",
     srcs = ["src/main/java/A.java"],
+    config = ":pmd_errorless_config",
     report_format = "text",
-    rulesets = ["pmd_rulesets_errorless.xml"],
     srcs_language_version = "1.8",
 )
 
 pmd(
     name = "pmd_build_no_fail",
     srcs = ["src/main/java/A.java"],
-    fail_on_violation = False,
+    config = ":pmd_error_no_fail_config",
     report_format = "text",
-    rulesets = ["pmd_rulesets_error.xml"],
 )
 
 write_file(
@@ -50,16 +66,16 @@ diff_test(
 pmd(
     name = "pmd_error_build_failure",
     srcs = glob(["src/main/java/**/*.java"]),
+    config = ":pmd_error_config",
     report_format = "text",
-    rulesets = ["pmd_rulesets_error.xml"],
     tags = ["manual"],
 )
 
 pmd_test(
     name = "pmd_error",
     srcs = glob(["src/main/java/**/*.java"]),
+    config = ":pmd_error_config",
     report_format = "text",
-    rulesets = ["pmd_rulesets_error.xml"],
     tags = ["manual"],
 )
 
@@ -76,8 +92,8 @@ sh_test(
 pmd_test(
     name = "pmd_error_ignored",
     srcs = ["src/main/java/A.java"],
+    config = ":pmd_error_config",
     report_format = "text",
-    rulesets = ["pmd_rulesets_error.xml"],
     srcs_ignore = ["src/main/java/A.java"],
 )
 
@@ -97,8 +113,8 @@ pmd_test(
         "src/main/java/A.java",
         "src/main/java/B.java",
     ],
+    config = ":pmd_error_config",
     report_format = "text",
-    rulesets = ["pmd_rulesets_error.xml"],
     srcs_ignore = ["src/main/java/A.java"],
     tags = ["manual"],
 )
@@ -116,8 +132,8 @@ sh_test(
 pmd_test(
     name = "pmd_errorless",
     srcs = glob(["src/main/java/**/*.java"]),
+    config = ":pmd_errorless_config",
     report_format = "text",
-    rulesets = ["pmd_rulesets_errorless.xml"],
     srcs_language_version = "1.8",
 )
 
@@ -134,9 +150,8 @@ sh_test(
 pmd_test(
     name = "pmd_error_no_fail",
     srcs = glob(["src/main/java/**/*.java"]),
-    fail_on_violation = False,
+    config = ":pmd_error_no_fail_config",
     report_format = "text",
-    rulesets = ["pmd_rulesets_error.xml"],
 )
 
 sh_test(
@@ -152,8 +167,8 @@ sh_test(
 pmd_test(
     name = "pmd_error_textcolor",
     srcs = glob(["src/main/java/**/*.java"]),
+    config = ":pmd_error_config",
     report_format = "textcolor",
-    rulesets = ["pmd_rulesets_error.xml"],
     tags = ["manual"],
 )
 
@@ -171,8 +186,8 @@ sh_test(
 pmd_test(
     name = "pmd_error_textpad",
     srcs = glob(["src/main/java/**/*.java"]),
+    config = ":pmd_error_config",
     report_format = "textpad",
-    rulesets = ["pmd_rulesets_error.xml"],
     tags = ["manual"],
 )
 
@@ -190,8 +205,8 @@ sh_test(
 pmd_test(
     name = "pmd_error_sarif",
     srcs = glob(["src/main/java/**/*.java"]),
+    config = ":pmd_error_config",
     report_format = "sarif",
-    rulesets = ["pmd_rulesets_error.xml"],
     tags = ["manual"],
 )
 
@@ -209,8 +224,8 @@ sh_test(
 pmd_test(
     name = "pmd_error_xml",
     srcs = glob(["src/main/java/**/*.java"]),
+    config = ":pmd_error_config",
     report_format = "xml",
-    rulesets = ["pmd_rulesets_error.xml"],
     tags = ["manual"],
 )
 

@@ -1,4 +1,5 @@
 load("@rules_java//java:defs.bzl", "java_binary", "java_library")
+load("//pmd:config.bzl", "pmd_config")
 load("//pmd:defs.bzl", "pmd_test")
 
 java_library(
@@ -14,8 +15,13 @@ java_binary(
     runtime_deps = [":wrapper"],
 )
 
+pmd_config(
+    name = "pmd_test_config",
+    rulesets = ["pmd_ruleset.xml"],
+)
+
 pmd_test(
     name = "pmd_test",
     srcs = glob(["src/main/java/**/*.java"]),
-    rulesets = ["pmd_ruleset.xml"],
+    config = ":pmd_test_config",
 )
