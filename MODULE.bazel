@@ -11,6 +11,7 @@ pmd = use_extension("//pmd:extensions.bzl", "pmd")
 use_repo(pmd, "net_sourceforge_pmd")
 
 bazel_dep(name = "rules_java", version = "9.3.0")
+bazel_dep(name = "rules_jvm_external", version = "7.2")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 
 bazel_dep(name = "bazel_skylib", version = "1.9.2", dev_dependency = True)
