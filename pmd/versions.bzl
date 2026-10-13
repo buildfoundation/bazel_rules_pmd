@@ -23,6 +23,6 @@ def pmd_version(version, sha256, url_templates = None):
     )
 
 DEFAULT_PMD_RELEASE = pmd_version(
-    version = "7.26.0",
-    sha256 = "9f55cb7ff0e9f9a66dd2f005eaa370e84c8a4cd971b134aa14a930c4a283ebc9",
+    version = "7.28.0",
+    sha256 = "f974ba571f7bc01c73fffe11bade25fbc1f438698f9e9c00e416e8d65e9fbac2",
 )
