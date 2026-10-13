@@ -174,7 +174,7 @@ $ bazel build --host_jvmopt=-Xmx512m //YOUR_PACKAGE:pmd_analysis
 Use `pmd` for a build-time analysis whose report is the target output.
 
 By default, violations fail the build; set `fail_on_violation = False` on the
-selected `pmd_toolchain` profile to keep the report while allowing violations.
+selected `pmd_config` profile to keep the report while allowing violations.
 
 ```console
 $ bazel build //YOUR_PACKAGE:pmd_analysis
