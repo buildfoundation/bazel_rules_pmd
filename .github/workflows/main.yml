@@ -42,7 +42,7 @@ jobs:
           distribution: "zulu"
           java-version: "21"
       - name: "Setup Bazel"
-        uses: bazel-contrib/setup-bazel@0.19.0
+        uses: bazel-contrib/setup-bazel@0.19.1
         with:
           bazelisk-cache: true
           disk-cache: true
