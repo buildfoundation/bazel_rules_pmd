@@ -132,47 +132,21 @@ def _action_full_contents_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = analysistest.target_actions(env)
-    asserts.equals(env, 9, len(actions))
-
-    # Action: writing file "srcs.txt"
-
-    action_write_file_srcs = actions[0]
-
-    action_write_file_srcs_outputs_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs_test_target_full.txt",
-    ])
-    action_write_file_srcs_outputs_actual = [file.path for file in action_write_file_srcs.outputs.to_list()]
-
-    asserts.equals(env, action_write_file_srcs_outputs_expected, action_write_file_srcs_outputs_actual)
-    asserts.equals(env, "\n".join(_expand_paths(env.ctx, [
-        "{{source_dir}}/path A.kt",
-        "{{source_dir}}/path B.kt",
-        "{{source_dir}}/path C.kt",
-    ])), action_write_file_srcs.content)
-
-    # Action: writing file "srcs_ignore.txt"
-
-    action_write_file_srcs_ignore = actions[1]
-
-    action_write_file_srcs_ignore_ouptuts_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs_ignore_test_target_full.txt",
-    ])
-    action_write_file_srcs_ignore_ouptuts_actual = [file.path for file in action_write_file_srcs_ignore.outputs.to_list()]
-
-    asserts.equals(env, action_write_file_srcs_ignore_ouptuts_expected, action_write_file_srcs_ignore_ouptuts_actual)
-    asserts.equals(env, "\n".join(_expand_paths(env.ctx, [
-        "{{source_dir}}/path D.kt",
-        "{{source_dir}}/path E.kt",
-    ])), action_write_file_srcs_ignore.content)
+    asserts.equals(env, 7, len(actions))
 
     # Action: PMD
 
-    action = actions[2]
+    action = actions[0]
     assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/pmd/wrapper/bin")
-    assert_argv_contains(env, action, "--file-list")
-    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_test_target_full.txt"))
-    assert_argv_contains(env, action, "--exclude-file-list")
-    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_ignore_test_target_full.txt"))
+
+    # argv inlines the --file-list and --exclude-file-list param files, in that order.
+    asserts.equals(env, _expand_paths(env.ctx, [
+        "{{source_dir}}/path A.kt",
+        "{{source_dir}}/path B.kt",
+        "{{source_dir}}/path C.kt",
+        "{{source_dir}}/path D.kt",
+        "{{source_dir}}/path E.kt",
+    ]), action.argv[-5:])
     assert_argv_contains(env, action, "--encoding")
     assert_argv_contains(env, action, "UTF-8")
     assert_argv_contains(env, action, "--force-language")
@@ -194,11 +168,9 @@ def _action_full_contents_test_impl(ctx):
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_full_pmd_result.txt"))
 
     expected_inputs = _expand_paths(env.ctx, [
-        "{{source_dir}}/srcs_test_target_full.txt",
         "{{source_dir}}/path A.kt",
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
-        "{{source_dir}}/srcs_ignore_test_target_full.txt",
         "{{source_dir}}/path D.kt",
         "{{source_dir}}/path E.kt",
         "{{source_dir}}/rulesets.xml",
@@ -219,7 +191,7 @@ def _action_full_contents_test_impl(ctx):
 
     # Action: public execution result launcher
 
-    action_launcher = actions[3]
+    action_launcher = actions[1]
     asserts.equals(env, "TemplateExpand", action_launcher.mnemonic)
     asserts.equals(env, [
         "tests/analysis/test_target_full_execution_result.sh",
@@ -266,26 +238,20 @@ def _action_blank_contents_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = analysistest.target_actions(env)
-    asserts.equals(env, 8, len(actions))
-
-    # Action: writing file "srcs.txt"
-
-    action_write_file_srcs = actions[0]
-
-    action_write_file_srcs_outputs_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs_test_target_blank.txt",
-    ])
-    action_write_file_srcs_outputs_actual = [file.path for file in action_write_file_srcs.outputs.to_list()]
-
-    asserts.equals(env, action_write_file_srcs_outputs_expected, action_write_file_srcs_outputs_actual)
+    asserts.equals(env, 7, len(actions))
 
     # Action: PMD
 
-    action = actions[1]
+    action = actions[0]
 
     assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/pmd/wrapper/bin")
-    assert_argv_contains(env, action, "--file-list")
-    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_test_target_blank.txt"))
+
+    # argv inlines the --file-list param file.
+    asserts.equals(env, _expand_paths(env.ctx, [
+        "{{source_dir}}/path A.kt",
+        "{{source_dir}}/path B.kt",
+        "{{source_dir}}/path C.kt",
+    ]), action.argv[-3:])
     assert_argv_contains(env, action, "--encoding")
     assert_argv_contains(env, action, "UTF-8")
     assert_argv_contains(env, action, "--force-language")
@@ -305,7 +271,6 @@ def _action_blank_contents_test_impl(ctx):
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_blank_pmd_result.txt"))
 
     expected_inputs = _expand_paths(env.ctx, [
-        "{{source_dir}}/srcs_test_target_blank.txt",
         "{{source_dir}}/path A.kt",
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
@@ -327,7 +292,7 @@ def _action_blank_contents_test_impl(ctx):
 
     # Action: public execution result launcher
 
-    action_launcher = actions[2]
+    action_launcher = actions[1]
     asserts.equals(env, "TemplateExpand", action_launcher.mnemonic)
     asserts.equals(env, [
         "tests/analysis/test_target_blank_execution_result.sh",
@@ -379,7 +344,6 @@ def _action_build_contents_test_impl(ctx):
     asserts.equals(env, 0, len([action for action in actions if action.mnemonic == "TemplateExpand"]))
 
     expected_inputs = _expand_paths(env.ctx, [
-        "{{source_dir}}/srcs_pmd_target_build.txt",
         "{{source_dir}}/path A.kt",
         "{{source_dir}}/rulesets.xml",
         "pmd/wrapper/bin",

@@ -13,7 +13,7 @@ _LANGUAGE_ALIASES = {
 
 def _impl(ctx, is_test):
     inputs = []
-    source_lists = []
+    file_lists = []
     outputs = []
     pmd_toolchain = ctx.toolchains[TOOLCHAIN_TYPE]
     if ctx.attr.config != None:
@@ -34,19 +34,11 @@ def _impl(ctx, is_test):
     # Sources
 
     if len(ctx.files.srcs) != 0:
-        srcs_file = _write_files_list(ctx, ctx.files.srcs, "srcs_{}.txt".format(ctx.label.name))
-        arguments.add("--file-list", srcs_file)
-
-        source_lists.append(srcs_file)
-        inputs.append(srcs_file)
+        file_lists.append(_file_list(ctx, "--file-list", ctx.files.srcs))
         inputs.extend(ctx.files.srcs)
 
     if len(ctx.files.srcs_ignore) != 0:
-        srcs_ignore_file = _write_files_list(ctx, ctx.files.srcs_ignore, "srcs_ignore_{}.txt".format(ctx.label.name))
-        arguments.add("--exclude-file-list", srcs_ignore_file)
-
-        source_lists.append(srcs_ignore_file)
-        inputs.append(srcs_ignore_file)
+        file_lists.append(_file_list(ctx, "--exclude-file-list", ctx.files.srcs_ignore))
         inputs.extend(ctx.files.srcs_ignore)
 
     arguments.add("--encoding", ctx.attr.srcs_encoding)
@@ -97,15 +89,13 @@ def _impl(ctx, is_test):
         execution_result = ctx.actions.declare_file("{}_execution_result.sh".format(ctx.label.name))
         pmd_result = ctx.actions.declare_file("{}_pmd_result.txt".format(ctx.label.name))
         outputs.append(pmd_result)
-        arguments.add("--execution-result", "{}".format(pmd_result.path))
+        arguments.add("--execution-result", pmd_result)
 
     # Run
 
     stage_args = ctx.actions.args()
     stage_args.add(pmd_toolchain.pmd_wrapper.executable)
-    stage_args.add_all(source_lists)
-    stage_args.add("--")
-    stage_args.add_all(source_lists + config.rulesets + outputs)
+    stage_args.add_all(config.rulesets + outputs)
     stage_args.add("--")
 
     ctx.actions.run(
@@ -114,7 +104,10 @@ def _impl(ctx, is_test):
         tools = [pmd_toolchain.pmd_wrapper],
         inputs = inputs,
         outputs = outputs,
-        arguments = [stage_args, arguments],
+        arguments = [stage_args, arguments] + file_lists,
+        # Every path reaches the command line as a File (directly or in a param file),
+        # so Bazel can strip configuration segments with --experimental_output_paths=strip.
+        execution_requirements = {"supports-path-mapping": "1"},
         toolchain = TOOLCHAIN_TYPE,
     )
 
@@ -144,13 +137,14 @@ def _impl(ctx, is_test):
         ),
     ]
 
-def _write_files_list(ctx, files, file_name):
-    file = ctx.actions.declare_file(file_name)
-    file_content = "\n".join([src.path for src in files])
-
-    ctx.actions.write(file, file_content, is_executable = False)
-
-    return file
+def _file_list(ctx, flag, files):
+    # A param file is written by the PMD action itself, so its paths are mapped with the
+    # action's command line; a separate ctx.actions.write would keep unmapped paths.
+    file_list = ctx.actions.args()
+    file_list.set_param_file_format("multiline")
+    file_list.use_param_file(flag + "=%s", use_always = True)
+    file_list.add_all(files)
+    return file_list
 
 def _runfile_path(ctx, file):
     if file.short_path.startswith("../"):
