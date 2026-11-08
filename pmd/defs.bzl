@@ -16,7 +16,12 @@ def _impl(ctx, is_test):
     source_lists = []
     outputs = []
     pmd_toolchain = ctx.toolchains[TOOLCHAIN_TYPE]
-    config = ctx.attr.config[PmdConfigInfo]
+    if ctx.attr.config != None:
+        config = ctx.attr.config[PmdConfigInfo]
+        config_label = ctx.attr.config.label
+    else:
+        config = pmd_toolchain.default_config
+        config_label = pmd_toolchain.default_config_label
 
     arguments = ctx.actions.args()
     arguments.add("check")
@@ -52,7 +57,7 @@ def _impl(ctx, is_test):
     # Rules
 
     if len(config.rulesets) == 0:
-        fail("PMD configuration {} selected by {} has no ruleset files; set config or --@rules_pmd//pmd:config to a populated pmd_config".format(ctx.attr.config.label, ctx.label))
+        fail("PMD configuration {} selected by {} has no ruleset files; set config or the registered toolchain's default_config to a populated pmd_config".format(config_label, ctx.label))
 
     arguments.add_joined("--rulesets", config.rulesets, join_with = ",")
     inputs.extend(config.rulesets)
@@ -204,9 +209,8 @@ _ATTRS = {
         doc = "See [PMD `--format` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)",
     ),
     "config": attr.label(
-        default = "//pmd:config",
         providers = [PmdConfigInfo],
-        doc = "PMD configuration. Defaults to the `@rules_pmd//pmd:config` label flag; an explicit value replaces it completely.",
+        doc = "PMD configuration. Replaces the registered toolchain's default_config completely when provided.",
     ),
     "fail_on_violation": attr.bool(
         default = True,

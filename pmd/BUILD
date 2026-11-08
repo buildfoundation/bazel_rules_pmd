@@ -6,13 +6,6 @@ pmd_config(
     visibility = ["//visibility:public"],
 )
 
-# Repository-wide default for the `config` attribute; only the root module's flags can set it.
-label_flag(
-    name = "config",
-    build_setting_default = ":default_config",
-    visibility = ["//visibility:public"],
-)
-
 toolchain_type(
     name = "toolchain_type",
     visibility = ["//visibility:public"],

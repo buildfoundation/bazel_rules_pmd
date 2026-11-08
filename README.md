@@ -52,14 +52,18 @@ pmd_test(
 replaces the default completely, including default-valued settings; nothing is
 merged or inherited per field. Different targets can use different configs.
 
-If a target omits `config`, the `@rules_pmd//pmd:config` label flag selects
-one. Set a repository-wide default from the root module's `.bazelrc`:
+If a target omits `config`, the registered PMD toolchain's `default_config` is
+used. To set a repository-wide default, register a toolchain that references
+your config (see [Toolchain](#toolchain)):
 
-```
-common --@rules_pmd//pmd:config=//quality:pmd_config
+```starlark
+pmd_toolchain(
+    name = "pmd_toolchain_impl",
+    default_config = "//quality:pmd_config",
+)
 ```
 
-The flag's bundled default has no rulesets, and a selected config must provide
+The bundled default config has no rulesets, and a selected config must provide
 at least one ruleset file; otherwise analysis fails with an error naming the
 selected config.
 
@@ -76,7 +80,7 @@ and [toolchain attributes](docs/toolchain.md) for the generated API reference.
 
 Move `rulesets`, `rules_minimum_priority`, and `threads_count` from each `pmd`
 or `pmd_test` target into a `pmd_config` target, then reference it with
-`config` or set it as the `@rules_pmd//pmd:config` default. `fail_on_violation`
+`config` or set it as the toolchain's `default_config`. `fail_on_violation`
 is unchanged. The toolchain's `jvm_flags` attribute was removed; use
 `--host_jvmopt` instead (see [JVM options](#jvm-options)).
 
@@ -118,8 +122,9 @@ This release uses PMD 7.29.0. Custom PMD distributions must be PMD 7.14.0 or new
 
 #### Toolchain
 
-The PMD toolchain supplies the executable, `@rules_pmd//pmd/wrapper:bin` by
-default. To use a different wrapper, register a custom toolchain:
+The PMD toolchain supplies the default config (`default_config`, which has no
+rulesets) and the executable (`pmd_wrapper`, `@rules_pmd//pmd/wrapper:bin` by
+default). To change either, register a custom toolchain:
 
 ```starlark
 # BUILD
@@ -127,7 +132,7 @@ load("@rules_pmd//pmd:toolchain.bzl", "pmd_toolchain")
 
 pmd_toolchain(
     name = "pmd_toolchain_impl",
-    pmd_wrapper = "//tools:my_pmd_wrapper",
+    default_config = "//quality:pmd_config",
 )
 
 toolchain(
@@ -138,7 +143,8 @@ toolchain(
 ```
 
 Register it from `MODULE.bazel` with `register_toolchains("//:pmd_toolchain")`.
-A custom `pmd_wrapper` is built in the exec configuration and receives the PMD
+Toolchains registered by the root module take precedence over the bundled
+default. A custom `pmd_wrapper` is built in the exec configuration and receives the PMD
 wrapper CLI arguments, not the raw PMD CLI.
 
 #### JVM options

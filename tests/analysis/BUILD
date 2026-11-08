@@ -5,11 +5,12 @@ load(":tests.bzl", "test_suite")
 
 pmd_toolchain(
     name = "custom_toolchain_impl",
+    default_config = ":registered_config",
     pmd_wrapper = ":custom_wrapper_bin",
 )
 
 pmd_config(
-    name = "flag_config",
+    name = "registered_config",
     rules_minimum_priority = 4,
     rulesets = ["registered_rulesets.xml"],
     threads_count = 17,

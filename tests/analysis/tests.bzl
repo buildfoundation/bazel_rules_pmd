@@ -445,9 +445,9 @@ def _test_action_build_no_fail_policy():
         target_under_test = ":pmd_target_build_no_fail",
     )
 
-# The @rules_pmd//pmd:config label flag supplies the config when a rule omits it.
+# The registered toolchain's default_config applies when a rule omits config.
 
-def _action_flag_config_test_impl(ctx):
+def _action_registered_config_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PMD"]
@@ -463,25 +463,25 @@ def _action_flag_config_test_impl(ctx):
 
     return analysistest.end(env)
 
-action_flag_config_test = analysistest.make(
-    _action_flag_config_test_impl,
+action_registered_config_test = analysistest.make(
+    _action_registered_config_test_impl,
     config_settings = {
-        str(Label("//pmd:config")): str(Label("//tests/analysis:flag_config")),
+        "//command_line_option:extra_toolchains": ["//tests/analysis:custom_toolchain"],
     },
 )
 
-def _test_action_flag_config():
+def _test_action_registered_config():
     pmd_test(
-        name = "test_target_flag_config",
+        name = "test_target_registered_config",
         srcs = ["path A.kt"],
         tags = ["manual"],
     )
-    action_flag_config_test(
-        name = "action_flag_config_test",
-        target_under_test = ":test_target_flag_config",
+    action_registered_config_test(
+        name = "action_registered_config_test",
+        target_under_test = ":test_target_registered_config",
     )
 
-# Explicit configs replace the label-flag default; the registered toolchain supplies the wrapper.
+# Explicit configs replace the registered default_config; the toolchain still supplies the wrapper.
 
 def _action_config_a_test_impl(ctx):
     env = analysistest.begin(ctx)
@@ -501,7 +501,7 @@ def _action_config_a_test_impl(ctx):
     asserts.false(
         env,
         _expand_path(ctx, "{{source_dir}}/registered_rulesets.xml") in _input_short_paths(action.inputs),
-        "Explicit config must not inherit the label-flag config's rulesets",
+        "Explicit config must not inherit the registered default_config rulesets",
     )
 
     return analysistest.end(env)
@@ -510,7 +510,6 @@ action_config_a_test = analysistest.make(
     _action_config_a_test_impl,
     config_settings = {
         "//command_line_option:extra_toolchains": ["//tests/analysis:custom_toolchain"],
-        str(Label("//pmd:config")): str(Label("//tests/analysis:flag_config")),
     },
 )
 
@@ -760,7 +759,7 @@ def test_suite(name):
     _test_action_blank_contents()
     _test_action_build_contents()
     _test_action_build_no_fail_policy()
-    _test_action_flag_config()
+    _test_action_registered_config()
     _test_action_config_a()
     _test_action_config_b()
     _test_action_select()
@@ -784,7 +783,7 @@ def test_suite(name):
             ":action_missing_default_rulesets_test",
             ":action_language_alias_vf_test",
             ":action_language_alias_vm_test",
-            ":action_flag_config_test",
+            ":action_registered_config_test",
             ":pmd_version_test",
         ],
     )
