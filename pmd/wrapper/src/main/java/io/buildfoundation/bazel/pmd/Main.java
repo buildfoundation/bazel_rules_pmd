@@ -39,9 +39,14 @@ public final class Main {
                 .setCaseInsensitiveEnumValuesAllowed(true)
                 .execute(pmdArgs.toArray(new String[0]));
 
-        if ((result == 0 || result == 4) && "sarif".equals(getArgument(pmdArgs, "--format"))
-                && System.getenv("RULES_PMD_STAGED_SOURCES") != null) {
-            relativizeSarifReport(Paths.get(getArgument(pmdArgs, "--report-file")));
+        if ((result == 0 || result == 4) && System.getenv("RULES_PMD_STAGED_SOURCES") != null) {
+            String format = getArgument(pmdArgs, "--format");
+            Path report = Paths.get(getArgument(pmdArgs, "--report-file"));
+            if ("sarif".equals(format)) {
+                relativizeSarifReport(report);
+            } else if ("xml".equals(format) || "json".equals(format)) {
+                pinReportTimestamp(report);
+            }
         }
 
         if (result != 0) {
@@ -54,6 +59,18 @@ public final class Main {
         }
 
         System.exit(result);
+    }
+
+    private static void pinReportTimestamp(Path report) {
+        // XML and JSON reports embed the wall-clock run time, which makes outputs non-reproducible.
+        // The report-level timestamp is the first one in both formats, ahead of any source content.
+        try {
+            String content = Files.readString(report);
+            Files.writeString(report, content.replaceFirst(
+                    "(?<key>\"?timestamp\"?\\s*[=:]\\s*\")[^\"]*\"", "${key}1970-01-01T00:00:00.000\""));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static void relativizeSarifReport(Path report) {

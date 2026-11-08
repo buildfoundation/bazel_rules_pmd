@@ -178,4 +178,4 @@ $ bazel test //YOUR_PACKAGE:pmd_analysis_test
 ```
 
 Human-readable PMD reports are replayed in the `pmd_test` log, including when
-the PMD build action is cached. All reports remain available as build outputs. SARIF artifact locations are relative to the Bazel execution root.
+the PMD build action is cached. All reports remain available as build outputs. SARIF artifact locations are relative to the Bazel execution root. XML and JSON report timestamps are fixed to `1970-01-01T00:00:00.000` so reports are reproducible.

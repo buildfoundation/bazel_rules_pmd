@@ -242,6 +242,25 @@ sh_test(
     data = [":pmd_error_xml"],
 )
 
+pmd_test(
+    name = "pmd_error_json",
+    srcs = glob(["src/main/java/**/*.java"]),
+    config = ":pmd_error_config",
+    report_format = "json",
+    tags = ["manual"],
+)
+
+sh_test(
+    name = "pmd_error_json_test",
+    srcs = ["test_pmd.sh"],
+    args = [
+        "4",
+        "$(rootpath :pmd_error_json)",
+        "json",
+    ],
+    data = [":pmd_error_json"],
+)
+
 sh_test(
     name = "pmd_wrapper_arguments_test",
     srcs = ["test_wrapper.sh"],

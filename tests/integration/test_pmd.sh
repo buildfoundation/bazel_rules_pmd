@@ -28,6 +28,10 @@ case "${report_extension}" in
         grep -Fq '"uri": "./tests/integration/src/main/java/A.java"' "${report_file}"
         test ! -s "${output_file}"
         ;;
+    xml|json)
+        grep -Eq 'timestamp"?[=:] ?"1970-01-01T00:00:00.000"' "${report_file}"
+        test ! -s "${output_file}"
+        ;;
     *)
         test ! -s "${output_file}"
         ;;
