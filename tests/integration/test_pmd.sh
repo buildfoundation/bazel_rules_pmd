@@ -25,6 +25,7 @@ case "${report_extension}" in
         test -s "${report_file}"
         grep -Fq '"version": "2.1.0"' "${report_file}"
         grep -Fq '"ruleId": "AbstractClassWithoutAbstractMethod"' "${report_file}"
+        grep -Fq '"uri": "./tests/integration/src/main/java/A.java"' "${report_file}"
         test ! -s "${output_file}"
         ;;
     *)
