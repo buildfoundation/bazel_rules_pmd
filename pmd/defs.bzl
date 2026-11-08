@@ -23,6 +23,11 @@ def _impl(ctx, is_test):
         config = pmd_toolchain.default_config
         config_label = pmd_toolchain.default_config_label
 
+    # PMD splits file lists and --rulesets on commas, so such paths cannot be passed through.
+    for file in ctx.files.srcs + ctx.files.srcs_ignore + config.rulesets:
+        if "," in file.path:
+            fail("PMD cannot read paths containing commas: {} (in {})".format(file.path, ctx.label))
+
     arguments = ctx.actions.args()
     arguments.add("check")
 
