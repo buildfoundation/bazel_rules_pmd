@@ -19,4 +19,5 @@ exports_files([
     "defs.bzl",
     "BUILD.pmd.bazel",
     "execution_result.sh.tpl",
+    "run_pmd.sh",
 ])

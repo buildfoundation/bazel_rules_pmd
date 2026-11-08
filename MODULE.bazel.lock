@@ -42,8 +42,8 @@
     "https://bcr.bazel.build/modules/bazel_features/1.39.0/MODULE.bazel": "28739425c1fc283c91931619749c832b555e60bcd1010b40d8441ce0a5cf726d",
     "https://bcr.bazel.build/modules/bazel_features/1.4.1/MODULE.bazel": "e45b6bb2350aff3e442ae1111c555e27eac1d915e77775f6fdc4b351b758b5d7",
     "https://bcr.bazel.build/modules/bazel_features/1.42.1/MODULE.bazel": "275a59b5406ff18c01739860aa70ad7ccb3cfb474579411decca11c93b951080",
-    "https://bcr.bazel.build/modules/bazel_features/1.52.0/MODULE.bazel": "8620725a18328936c38914a54c90b042ca8b0391abb9a751b9a58f13fce1f3c0",
-    "https://bcr.bazel.build/modules/bazel_features/1.52.0/source.json": "d03f68822370a0f40ca6e5a7445b8b2916163382c1a97ec021cbbdb6cb3f1461",
+    "https://bcr.bazel.build/modules/bazel_features/1.54.1/MODULE.bazel": "026b77134bd460e2ca0f44c57f4f3a3a8593f27a497b4ee98336e065047834f5",
+    "https://bcr.bazel.build/modules/bazel_features/1.54.1/source.json": "23ba6f9625d32f5f718393ae65f05ac70025448aed23543c238b1cffec08f28a",
     "https://bcr.bazel.build/modules/bazel_features/1.9.0/MODULE.bazel": "885151d58d90d8d9c811eb75e3288c11f850e1d6b481a8c9f766adee4712358b",
     "https://bcr.bazel.build/modules/bazel_features/1.9.1/MODULE.bazel": "8f679097876a9b609ad1f60249c49d68bfab783dd9be012faf9d82547b14815a",
     "https://bcr.bazel.build/modules/bazel_lib/3.0.0/MODULE.bazel": "22b70b80ac89ad3f3772526cd9feee2fa412c2b01933fea7ed13238a448d370d",
@@ -260,7 +260,7 @@
   "moduleExtensions": {
     "//pmd:extensions.bzl%pmd": {
       "general": {
-        "bzlTransitiveDigest": "MLyke6M1MGGehx0V7F6PE1os7WnFebLb+B0ZdejZAh4=",
+        "bzlTransitiveDigest": "UGNNaarnTNi94Rhh9imsCu4csjzsnvtv8u+D//hfp80=",
         "usagesDigest": "trQm7+xfAVOGdK0XpZ4as9UqqePv7mpb5UP38pHp9SU=",
         "recordedInputs": [
           "REPO_MAPPING:,bazel_tools bazel_tools"
@@ -270,10 +270,10 @@
             "repoRuleId": "@@bazel_tools//tools/build_defs/repo:http.bzl%http_archive",
             "attributes": {
               "urls": [
-                "https://github.com/pmd/pmd/releases/download/pmd_releases/7.28.0/pmd-dist-7.28.0-bin.zip"
+                "https://github.com/pmd/pmd/releases/download/pmd_releases/7.29.0/pmd-dist-7.29.0-bin.zip"
               ],
-              "strip_prefix": "pmd-bin-7.28.0/lib",
-              "sha256": "f974ba571f7bc01c73fffe11bade25fbc1f438698f9e9c00e416e8d65e9fbac2",
+              "strip_prefix": "pmd-bin-7.29.0/lib",
+              "sha256": "d27177c185b837fa57f097e482d1253468aa035379c5eb2671fa0a279109b179",
               "build_file": "@@//pmd:BUILD.pmd.bazel"
             }
           }

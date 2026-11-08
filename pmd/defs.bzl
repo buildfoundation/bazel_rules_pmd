@@ -11,6 +11,7 @@ _LANGUAGE_ALIASES = {
 
 def _impl(ctx, is_test):
     inputs = []
+    source_lists = []
     outputs = []
 
     java_arguments = ctx.actions.args()
@@ -28,6 +29,7 @@ def _impl(ctx, is_test):
         srcs_file = _write_files_list(ctx, ctx.files.srcs, "srcs_{}.txt".format(ctx.label.name))
         arguments.add("--file-list", srcs_file)
 
+        source_lists.append(srcs_file)
         inputs.append(srcs_file)
         inputs.extend(ctx.files.srcs)
 
@@ -35,6 +37,7 @@ def _impl(ctx, is_test):
         srcs_ignore_file = _write_files_list(ctx, ctx.files.srcs_ignore, "srcs_ignore_{}.txt".format(ctx.label.name))
         arguments.add("--exclude-file-list", srcs_ignore_file)
 
+        source_lists.append(srcs_ignore_file)
         inputs.append(srcs_ignore_file)
         inputs.extend(ctx.files.srcs_ignore)
 
@@ -87,12 +90,20 @@ def _impl(ctx, is_test):
 
     # Run
 
+    stage_args = ctx.actions.args()
+    stage_args.add(ctx.executable._executable)
+    stage_args.add_all(source_lists)
+    stage_args.add("--")
+    stage_args.add_all(source_lists + ctx.files.rulesets + outputs)
+    stage_args.add("--")
+
     ctx.actions.run(
         mnemonic = "PMD",
-        executable = ctx.executable._executable,
+        executable = ctx.file._runner,
+        tools = [ctx.attr._executable[DefaultInfo].files_to_run],
         inputs = inputs,
         outputs = outputs,
-        arguments = [java_arguments, arguments],
+        arguments = [stage_args, java_arguments, arguments],
     )
 
     if not is_test:
@@ -151,6 +162,10 @@ _report_format_extensions = {
 _text_report_formats = ["text", "textcolor", "textpad"]
 
 _ATTRS = {
+    "_runner": attr.label(
+        default = "//pmd:run_pmd.sh",
+        allow_single_file = True,
+    ),
     "_executable": attr.label(
         default = "//pmd/wrapper:bin",
         executable = True,

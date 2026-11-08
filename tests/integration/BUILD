@@ -91,11 +91,17 @@ sh_test(
     data = [":pmd_error_ignored"],
 )
 
+write_file(
+    name = "generated_source",
+    out = "generated sources/B.java",
+    content = ["abstract class B {}"],
+)
+
 pmd_test(
     name = "pmd_error_mixed_ignored",
     srcs = [
         "src/main/java/A.java",
-        "src/main/java/B.java",
+        ":generated_source",
     ],
     report_format = "text",
     rulesets = ["pmd_rulesets_error.xml"],
