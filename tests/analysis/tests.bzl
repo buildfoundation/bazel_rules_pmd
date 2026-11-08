@@ -674,6 +674,30 @@ def _test_action_missing_rulesets():
         target_under_test = ":test_target_missing_default_rulesets",
     )
 
+# PMD splits file lists on commas, so comma paths must fail during analysis.
+
+def _action_comma_path_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    asserts.expect_failure(env, "PMD cannot read paths containing commas")
+    return analysistest.end(env)
+
+action_comma_path_test = analysistest.make(
+    _action_comma_path_test_impl,
+    expect_failure = True,
+)
+
+def _test_action_comma_path():
+    pmd(
+        name = "test_target_comma_path",
+        srcs = ["a,b.java"],
+        config = ":blank_config",
+        tags = ["manual"],
+    )
+    action_comma_path_test(
+        name = "action_comma_path_test",
+        target_under_test = ":test_target_comma_path",
+    )
+
 # PMD 6 language aliases retained by the public rule API
 
 def _action_language_alias_test_impl(ctx):
@@ -764,6 +788,7 @@ def test_suite(name):
     _test_action_config_b()
     _test_action_select()
     _test_action_missing_rulesets()
+    _test_action_comma_path()
     _test_action_language_alias("vf", "visualforce")
     _test_action_language_alias("vm", "velocity")
     pmd_version_test(name = "pmd_version_test")
@@ -781,6 +806,7 @@ def test_suite(name):
             ":action_select_default_test",
             ":action_missing_rulesets_test",
             ":action_missing_default_rulesets_test",
+            ":action_comma_path_test",
             ":action_language_alias_vf_test",
             ":action_language_alias_vm_test",
             ":action_registered_config_test",
