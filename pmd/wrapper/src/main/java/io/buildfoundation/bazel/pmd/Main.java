@@ -1,6 +1,10 @@
 package io.buildfoundation.bazel.pmd;
 
 // ponytail: PMD has no public non-exiting CLI entrypoint; this internal adapter must be checked on PMD upgrades.
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.sourceforge.pmd.cli.commands.internal.PmdRootCommand;
 import net.sourceforge.pmd.renderers.TextColorRenderer;
 import net.sourceforge.pmd.renderers.TextPadRenderer;
@@ -12,6 +16,10 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public final class Main {
@@ -31,6 +39,11 @@ public final class Main {
                 .setCaseInsensitiveEnumValuesAllowed(true)
                 .execute(pmdArgs.toArray(new String[0]));
 
+        if ((result == 0 || result == 4) && "sarif".equals(getArgument(pmdArgs, "--format"))
+                && System.getenv("RULES_PMD_STAGED_SOURCES") != null) {
+            relativizeSarifReport(Paths.get(getArgument(pmdArgs, "--report-file")));
+        }
+
         if (result != 0) {
             printError(pmdArgs);
         }
@@ -41,6 +54,43 @@ public final class Main {
         }
 
         System.exit(result);
+    }
+
+    private static void relativizeSarifReport(Path report) {
+        // PMD's SARIF renderer emits absolute URIs even for relative input paths.
+        try {
+            JsonElement sarif;
+            try (BufferedReader reader = Files.newBufferedReader(report)) {
+                sarif = JsonParser.parseReader(reader);
+            }
+            Path root = Paths.get("").toAbsolutePath();
+            relativizeArtifactUris(sarif, root.toUri().toString(), root.getParent().toUri().toString());
+            try (BufferedWriter writer = Files.newBufferedWriter(report)) {
+                new GsonBuilder().setPrettyPrinting().create().toJson(sarif, writer);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static void relativizeArtifactUris(JsonElement node, String root, String parent) {
+        if (node.isJsonArray()) {
+            node.getAsJsonArray().forEach(child -> relativizeArtifactUris(child, root, parent));
+        } else if (node.isJsonObject()) {
+            JsonObject object = node.getAsJsonObject();
+            if (object.has("artifactLocation")) {
+                JsonObject artifact = object.getAsJsonObject("artifactLocation");
+                if (artifact.has("uri")) {
+                    String uri = artifact.get("uri").getAsString();
+                    if (uri.startsWith(root)) {
+                        artifact.addProperty("uri", "./" + uri.substring(root.length()));
+                    } else if (uri.startsWith(parent)) {
+                        artifact.addProperty("uri", "../" + uri.substring(parent.length()));
+                    }
+                }
+            }
+            object.entrySet().forEach(entry -> relativizeArtifactUris(entry.getValue(), root, parent));
+        }
     }
 
     /**
