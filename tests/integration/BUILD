@@ -46,9 +46,11 @@ diff_test(
 write_file(
     name = "pmd_build_no_fail_report_expected",
     out = "pmd_build_no_fail_report_expected.txt",
-    content = [
-        "tests/integration/src/main/java/A.java:1:\tAbstractClassWithoutAbstractMethod:\tThis abstract class does not have any abstract methods\n",
-    ],
+    # PMD reports native path separators.
+    content = select({
+        "@platforms//os:windows": ["tests\\integration\\src\\main\\java\\A.java:1:\tAbstractClassWithoutAbstractMethod:\tThis abstract class does not have any abstract methods\n"],
+        "//conditions:default": ["tests/integration/src/main/java/A.java:1:\tAbstractClassWithoutAbstractMethod:\tThis abstract class does not have any abstract methods\n"],
+    }),
     newline = "unix",
 )
 

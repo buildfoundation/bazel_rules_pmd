@@ -157,6 +157,7 @@ def _windows_bash_launcher(ctx, script):
     launch_info = ctx.actions.args().use_param_file("%s", use_always = True).set_param_file_format("multiline")
     launch_info.add("binary_type=Bash")
     launch_info.add(ctx.workspace_name, format = "workspace_name=%s")
+
     # runfiles_enabled() is private API; the manifest exists either way and runfiles.bash reads it.
     launch_info.add("symlink_runfiles_enabled=0")
     launch_info.add(sh.path, format = "bash_bin_path=%s")

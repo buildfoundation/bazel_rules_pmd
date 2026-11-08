@@ -135,7 +135,7 @@ def _action_full_contents_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = analysistest.target_actions(env)
-    asserts.equals(env, 9, len(actions))
+    asserts.equals(env, 9, len([a for a in actions if a.mnemonic != "PmdTestLauncher"]))  # Windows-only launcher
 
     # Action: writing file "srcs.txt"
 
@@ -269,7 +269,7 @@ def _action_blank_contents_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = analysistest.target_actions(env)
-    asserts.equals(env, 8, len(actions))
+    asserts.equals(env, 8, len([a for a in actions if a.mnemonic != "PmdTestLauncher"]))  # Windows-only launcher
 
     # Action: writing file "srcs.txt"
 
