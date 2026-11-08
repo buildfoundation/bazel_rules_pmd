@@ -34,7 +34,7 @@ def _impl(ctx, is_test):
     # Sources
 
     if len(ctx.files.srcs) != 0:
-        srcs_file = _write_files_list(ctx, ctx.files.srcs, "srcs_{}.txt".format(ctx.label.name))
+        srcs_file = _write_files_list(ctx, ctx.files.srcs, "{}_srcs.txt".format(ctx.label.name))
         arguments.add("--file-list", srcs_file)
 
         source_lists.append(srcs_file)
@@ -42,7 +42,7 @@ def _impl(ctx, is_test):
         inputs.extend(ctx.files.srcs)
 
     if len(ctx.files.srcs_ignore) != 0:
-        srcs_ignore_file = _write_files_list(ctx, ctx.files.srcs_ignore, "srcs_ignore_{}.txt".format(ctx.label.name))
+        srcs_ignore_file = _write_files_list(ctx, ctx.files.srcs_ignore, "{}_srcs_ignore.txt".format(ctx.label.name))
         arguments.add("--exclude-file-list", srcs_ignore_file)
 
         source_lists.append(srcs_ignore_file)
