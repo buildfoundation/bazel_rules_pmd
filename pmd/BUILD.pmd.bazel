@@ -8,7 +8,7 @@ java_import(
 
 java_binary(
     name = "bin",
-    main_class = "net.sourceforge.pmd.PMD",
+    main_class = "net.sourceforge.pmd.cli.PmdCli",
     visibility = ["//visibility:public"],
     runtime_deps = [":pmd"],
 )

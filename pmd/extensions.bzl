@@ -14,6 +14,7 @@ _version_tag = tag_class(
     attrs = {
         "version": attr.string(mandatory = True),
         "sha256": attr.string(mandatory = True),
+        "url_templates": attr.string_list(),
     },
 )
 
@@ -32,7 +33,11 @@ def _pmd_impl(mctx):
         for override in mod.tags.pmd_version:
             if pmd_version:
                 fail("Only a single pmd_version at once is supported right now!")
-            pmd_version = _pmd_version(version = override.version, sha256 = override.sha256)
+            pmd_version = _pmd_version(
+                version = override.version,
+                sha256 = override.sha256,
+                url_templates = override.url_templates if override.url_templates else None,
+            )
 
     kwargs = dict(pmd = _DEFAULT_PMD_RELEASE)
     if pmd_version:

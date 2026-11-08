@@ -1,22 +1,32 @@
 package io.buildfoundation.bazel.pmd;
 
-import net.sourceforge.pmd.PMD;
+// ponytail: PMD has no public non-exiting CLI entrypoint; this internal adapter must be checked on PMD upgrades.
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.sourceforge.pmd.cli.commands.internal.PmdRootCommand;
 import net.sourceforge.pmd.renderers.TextColorRenderer;
 import net.sourceforge.pmd.renderers.TextPadRenderer;
 import net.sourceforge.pmd.renderers.TextRenderer;
+import picocli.CommandLine;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public final class Main {
 
     /**
      * Entry point of the application.
-     * Processes input arguments, runs PMD, prints errors, and writes the execution result to a file.
+     * Processes input arguments, runs PMD, prints errors, and optionally writes the execution result to a file.
      */
     public static void main(String[] args) {
         List<String> inputArgs = Arrays.asList(args);
@@ -24,15 +34,63 @@ public final class Main {
 
         List<String> pmdArgs = sanitizePmdArguments(inputArgs);
 
-        PMD.StatusCode result = PMD.runPmd(pmdArgs.toArray(new String[0]));
+        System.setProperty("picocli.disable.closures", "true");
+        int result = new CommandLine(new PmdRootCommand())
+                .setCaseInsensitiveEnumValuesAllowed(true)
+                .execute(pmdArgs.toArray(new String[0]));
 
-        if (!result.equals(PMD.StatusCode.OK)) {
+        if ((result == 0 || result == 4) && "sarif".equals(getArgument(pmdArgs, "--format"))
+                && System.getenv("RULES_PMD_STAGED_SOURCES") != null) {
+            relativizeSarifReport(Paths.get(getArgument(pmdArgs, "--report-file")));
+        }
+
+        if (result != 0) {
             printError(pmdArgs);
         }
 
-        writeExecutionResultToFile(result, executionResultOutputPath);
+        if (executionResultOutputPath != null) {
+            writeExecutionResultToFile(result, executionResultOutputPath);
+            System.exit(0);
+        }
 
-        System.exit(0);
+        System.exit(result);
+    }
+
+    private static void relativizeSarifReport(Path report) {
+        // PMD's SARIF renderer emits absolute URIs even for relative input paths.
+        try {
+            JsonElement sarif;
+            try (BufferedReader reader = Files.newBufferedReader(report)) {
+                sarif = JsonParser.parseReader(reader);
+            }
+            Path root = Paths.get("").toAbsolutePath();
+            relativizeArtifactUris(sarif, root.toUri().toString(), root.getParent().toUri().toString());
+            try (BufferedWriter writer = Files.newBufferedWriter(report)) {
+                new GsonBuilder().setPrettyPrinting().create().toJson(sarif, writer);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static void relativizeArtifactUris(JsonElement node, String root, String parent) {
+        if (node.isJsonArray()) {
+            node.getAsJsonArray().forEach(child -> relativizeArtifactUris(child, root, parent));
+        } else if (node.isJsonObject()) {
+            JsonObject object = node.getAsJsonObject();
+            if (object.has("artifactLocation")) {
+                JsonObject artifact = object.getAsJsonObject("artifactLocation");
+                if (artifact.has("uri")) {
+                    String uri = artifact.get("uri").getAsString();
+                    if (uri.startsWith(root)) {
+                        artifact.addProperty("uri", "./" + uri.substring(root.length()));
+                    } else if (uri.startsWith(parent)) {
+                        artifact.addProperty("uri", "../" + uri.substring(parent.length()));
+                    }
+                }
+            }
+            object.entrySet().forEach(entry -> relativizeArtifactUris(entry.getValue(), root, parent));
+        }
     }
 
     /**
@@ -53,9 +111,9 @@ public final class Main {
     /**
      * Writes the execution result to a file
      */
-    private static void writeExecutionResultToFile(PMD.StatusCode statusCode, String executionResultOutputPath) {
+    private static void writeExecutionResultToFile(int statusCode, String executionResultOutputPath) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(executionResultOutputPath))) {
-            writer.write(String.format("#!/bin/bash\n\nexit %d\n", statusCode.toInt()));
+            writer.write(statusCode + "\n");
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -67,7 +125,7 @@ public final class Main {
      */
     private static String getExecutionResultOutputPath(List<String> inputArgs) {
         String outputPath = getArgument(inputArgs, "--execution-result");
-        if (outputPath == null) {
+        if (outputPath == null && inputArgs.contains("--execution-result")) {
             System.exit(1);
         }
         return outputPath;
@@ -111,13 +169,8 @@ public final class Main {
      * @return The value associated with the given argument name or null if the argument is not found.
      */
     private static String getArgument(List<String> inputArgs, String argName) {
-        try {
-            // Get the index of the argument and return the value at the next index.
-            return inputArgs.get(inputArgs.indexOf(argName) + 1);
-        } catch (IndexOutOfBoundsException ignored) {
-            // Return null if the argument is not found or there's no value after it.
-            return null;
-        }
+        int argumentIndex = inputArgs.indexOf(argName);
+        return argumentIndex >= 0 && argumentIndex + 1 < inputArgs.size() ? inputArgs.get(argumentIndex + 1) : null;
     }
 
     /**
