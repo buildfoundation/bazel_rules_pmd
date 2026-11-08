@@ -1,1 +1,5 @@
 common --test_tag_filters=-manual
+
+# The integration test scripts read runfiles by relative path.
+common --enable_platform_specific_config
+common:windows --enable_runfiles

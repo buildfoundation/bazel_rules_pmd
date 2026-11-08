@@ -182,7 +182,8 @@ the PMD build action is cached. All reports remain available as build outputs. S
 
 ### Windows
 
-PMD test execution requires Bash on Windows, discoverable on `PATH`. See
+rules_pmd runs PMD through Bash, so Windows needs Bash available to Bazel
+(Git Bash is detected automatically; otherwise set `BAZEL_SH`). See
 [Bazel's Windows installation
 documentation](https://bazel.build/install/windows) for setup. CI covers Linux
 and Windows across Bazel 8.x, 9.x, and rolling.
