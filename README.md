@@ -18,105 +18,67 @@ Please refer to [GitHub releases](https://github.com/buildfoundation/bazel_rules
 Once declared in the `MODULE.bazel` file, the rule can be loaded in the `BUILD` file.
 
 ```starlark
-load("@rules_pmd//pmd:defs.bzl", "pmd", "pmd_test")
+# quality/BUILD
 load("@rules_pmd//pmd:config.bzl", "pmd_config")
 
 pmd_config(
-    name = "pmd_profile",
-    rulesets = ["//quality:pmd_ruleset.xml"],
+    name = "pmd_config",
+    rulesets = ["pmd_ruleset.xml"],
+    visibility = ["//visibility:public"],
 )
+```
+
+```starlark
+# YOUR_PACKAGE/BUILD
+load("@rules_pmd//pmd:defs.bzl", "pmd", "pmd_test")
 
 pmd(
     name = "pmd_analysis",
     srcs = glob(["src/main/java/**/*.java"]),
-    config = ":pmd_profile",
+    config = "//quality:pmd_config",
 )
 
 pmd_test(
     name = "pmd_analysis_test",
     srcs = glob(["src/main/java/**/*.java"]),
-    config = ":pmd_profile",
+    config = "//quality:pmd_config",
 )
 ```
 
-`pmd_config` centralizes the analysis policy shared by `pmd` and `pmd_test`.
-The `config` attribute references this ordinary configuration target; no
-registration is needed. If omitted, the registered PMD toolchain's
-`default_config` is used. Bazel always selects the executable toolchain.
+`pmd_config` holds the analysis policy shared by `pmd` and `pmd_test`:
+`rulesets`, `rules_minimum_priority` (default `5`), and `threads_count`
+(default `1`). Like any target, a config used from other packages needs
+`visibility`. The selected config is authoritative: an explicit `config`
+replaces the default completely, including default-valued settings; nothing is
+merged or inherited per field. Different targets can use different configs.
 
-The bundled default configuration intentionally has no rulesets. A selected
-configuration must provide a non-empty `rulesets` set; otherwise analysis
-fails. The selected profile is authoritative: `rulesets`,
-`rules_minimum_priority`, `fail_on_violation`, and `threads_count` are not
-rule-level overrides and are not merged with a profile.
+If a target omits `config`, the `@rules_pmd//pmd:config` label flag selects
+one. Set a repository-wide default from the root module's `.bazelrc`:
 
-Multiple profiles can coexist when targets need different policy:
-
-```starlark
-pmd_config(name = "strict_profile", rulesets = ["//quality:strict.xml"])
-pmd_config(name = "legacy_profile", rulesets = ["//quality:legacy.xml"])
-
-pmd(
-    name = "strict_analysis",
-    srcs = ["Strict.java"],
-    config = ":strict_profile",
-)
-pmd_test(
-    name = "legacy_analysis",
-    srcs = ["Legacy.java"],
-    config = ":legacy_profile",
-)
+```
+common --@rules_pmd//pmd:config=//quality:pmd_config
 ```
 
-To supply a repository-wide default, reference the configuration from a
-toolchain and register that toolchain from `MODULE.bazel`:
+The flag's bundled default has no rulesets, and a selected config must provide
+at least one ruleset file; otherwise analysis fails with an error naming the
+selected config.
 
-```starlark
-# BUILD
-load("@rules_pmd//pmd:toolchain.bzl", "pmd_toolchain")
-
-pmd_toolchain(
-    name = "pmd_toolchain_impl",
-    default_config = ":pmd_profile",
-)
-
-toolchain(
-    name = "pmd_toolchain",
-    toolchain = ":pmd_toolchain_impl",
-    toolchain_type = "@rules_pmd//pmd:toolchain_type",
-)
-```
-
-```starlark
-# MODULE.bazel
-register_toolchains("//:pmd_toolchain")
-```
-
-Configurations can also set `rules_minimum_priority` (default `5`),
-`fail_on_violation` (default `True`), and `threads_count` (default `1`).
-An explicit `config` replaces the entire default configuration, including
-ordinary default-valued settings; nothing is merged or inherited per field.
-
-The toolchain owns the public `pmd_wrapper` executable (default
-`@rules_pmd//pmd/wrapper:bin`). The wrapper receives the PMD wrapper CLI
-arguments; it is not the raw PMD CLI. `pmd_wrapper` is resolved in exec
-configuration automatically; a custom value only needs to be an executable
-target.
-See the [rule attributes](docs/rule.md), [config attributes](docs/config.md), and [toolchain attributes](docs/toolchain.md)
-for the generated API reference.
-
-The source and output choices stay on each rule: `srcs`, `srcs_ignore`,
+The remaining options stay on each rule: `srcs`, `srcs_ignore`,
 `srcs_encoding` (default `UTF-8`), `srcs_language` (default `java`; allowed
 values are `apex`, `ecmascript`, `java`, `jsp`, `modelica`, `plsql`, `scala`,
-`vf`, `vm`, and `xml`), `srcs_language_version`, and `report_format`. PMD is
-polyglot, so targets may need different source metadata, and report format is
-an output choice for the individual target.
+`vf`, `vm`, and `xml`), `srcs_language_version`, `report_format`, and
+`fail_on_violation` (default `True`).
 
-Migration from the previous API: move `rulesets`, `rules_minimum_priority`,
-`fail_on_violation`, and `threads_count` from each `pmd` or `pmd_test` target
-into a `pmd_config` target, then reference it with `config` or the toolchain's
-`default_config`. The per-target `pmd_toolchain` selector is not supported. Those
-four rule attributes were removed; there is no per-target override or merge.
+See the [rule attributes](docs/rule.md), [config attributes](docs/config.md),
+and [toolchain attributes](docs/toolchain.md) for the generated API reference.
+
+#### Migrating from 0.4.x
+
+Move `rulesets`, `rules_minimum_priority`, and `threads_count` from each `pmd`
+or `pmd_test` target into a `pmd_config` target, then reference it with
+`config` or set it as the `@rules_pmd//pmd:config` default. `fail_on_violation`
+is unchanged. The toolchain's `jvm_flags` attribute was removed; use
+`--host_jvmopt` instead (see [JVM options](#jvm-options)).
 
 #### PMD Version
 
@@ -154,27 +116,49 @@ This release uses PMD 7.29.0. Custom PMD distributions must be PMD 7.14.0 or new
 <rule ref="category/java/bestpractices.xml/AbstractClassWithoutAbstractMethod" />
 ```
 
-The PMD version, checksum, and download URL templates remain Bzlmod extension
-settings; they are not profile attributes.
+#### Toolchain
+
+The PMD toolchain supplies the executable, `@rules_pmd//pmd/wrapper:bin` by
+default. To use a different wrapper, register a custom toolchain:
+
+```starlark
+# BUILD
+load("@rules_pmd//pmd:toolchain.bzl", "pmd_toolchain")
+
+pmd_toolchain(
+    name = "pmd_toolchain_impl",
+    pmd_wrapper = "//tools:my_pmd_wrapper",
+)
+
+toolchain(
+    name = "pmd_toolchain",
+    toolchain = ":pmd_toolchain_impl",
+    toolchain_type = "@rules_pmd//pmd:toolchain_type",
+)
+```
+
+Register it from `MODULE.bazel` with `register_toolchains("//:pmd_toolchain")`.
+A custom `pmd_wrapper` is built in the exec configuration and receives the PMD
+wrapper CLI arguments, not the raw PMD CLI.
 
 #### JVM options
 
-The `jvm_flags` profile attribute was removed. The PMD wrapper is an
-exec-configured `java_binary`; use Bazel's native execution-JVM option when it
-needs more heap:
+The wrapper is an exec-configured `java_binary`, so set its JVM options with
+Bazel's `--host_jvmopt`, for example in `.bazelrc`:
 
-```console
-$ bazel build --host_jvmopt=-Xmx512m //YOUR_PACKAGE:pmd_analysis
+```
+common --host_jvmopt=-Xmx1g
 ```
 
-`--host_jvm_args` configures the Bazel server JVM, not the PMD execution JVM.
+This applies to every exec-configured `java_binary`, not only PMD.
+`--host_jvm_args` configures the Bazel server JVM instead.
 
 ### Execution
 
 Use `pmd` for a build-time analysis whose report is the target output.
 
 By default, violations fail the build; set `fail_on_violation = False` on the
-selected `pmd_config` profile to keep the report while allowing violations.
+target to keep the report while allowing violations.
 
 ```console
 $ bazel build //YOUR_PACKAGE:pmd_analysis

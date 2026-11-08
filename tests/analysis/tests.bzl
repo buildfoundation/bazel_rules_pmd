@@ -7,21 +7,6 @@ load("//pmd:config.bzl", "pmd_config")
 load("//pmd:defs.bzl", "pmd", "pmd_test")
 load("//pmd:versions.bzl", "DEFAULT_PMD_RELEASE", "pmd_version")
 
-def _assert_rule_kind(name, expected):
-    rule = native.existing_rule(name)
-    if rule == None or rule["kind"] != expected:
-        fail("Expected {} to have kind {}, got {}".format(name, expected, rule))
-    for option in [
-        "fail_on_violation",
-        "rules_minimum_priority",
-        "rulesets",
-        "threads_count",
-        "_executable",
-        "pmd_toolchain",
-    ]:
-        if option in rule:
-            fail("{} must be configured on pmd_config, not {}".format(option, expected))
-
 def _expand_path(ctx, value):
     source_dir = ctx.build_file_path.replace("/BUILD", "")
     output_dir = ctx.bin_dir.path
@@ -47,6 +32,15 @@ def assert_argv_contains(env, action, flag):
         "Expected {args} to contain {flag}".format(args = action.argv, flag = flag),
     )
 
+def assert_flag_value(env, action, flag, value):
+    argv = action.argv
+    index = argv.index(flag) if flag in argv else -1
+    asserts.true(
+        env,
+        index >= 0 and index + 1 < len(argv) and argv[index + 1] == value,
+        "Expected {flag} {value} in {args}".format(flag = flag, value = value, args = argv),
+    )
+
 def assert_argv_lacks(env, action, flag):
     asserts.false(
         env,
@@ -65,12 +59,22 @@ def _expand_paths(ctx, values):
         for value in values
     ]
 
+def _unescape_middleman(name):
+    # Reverses Bazel's Actions.escapedPath. Every "_" starts an escape, so splitting on "_U"
+    # (a literal "_") first leaves pieces whose remaining "_X" sequences are all escapes.
+    return "_".join([
+        piece.replace("_S", "/").replace("_B", "\\").replace("_C", ":").replace("_A", "@")
+        for piece in name.split("_U")
+    ])
+
 def _input_short_path(file):
+    # The wrapper runfiles tree is the `_middlemen/<escaped>-runfiles` artifact on Bazel 8
+    # and `<path>.runfiles` on Bazel 9; normalize both to the Bazel 9 name.
     path = file.short_path
     prefix = "_middlemen/"
     suffix = "-runfiles"
     if path.startswith(prefix) and path.endswith(suffix):
-        return path[len(prefix):len(path) - len(suffix)].replace("_S", "/") + ".runfiles"
+        return _unescape_middleman(path[len(prefix):len(path) - len(suffix)]) + ".runfiles"
     return path
 
 def _input_short_paths(files):
@@ -80,7 +84,7 @@ def _asserted_input_short_paths(action):
     return sorted([
         path
         for path in _input_short_paths(action.inputs)
-        if not path.endswith(".runfiles")
+        if not path.startswith("_middlemen/") and not path.endswith(".runfiles")
     ])
 
 def assert_input_contains(env, action, path):
@@ -177,8 +181,7 @@ def _action_full_contents_test_impl(ctx):
     assert_argv_contains(env, action, "java-1.8")
     assert_argv_contains(env, action, "--rulesets")
     assert_argv_contains(env, action, _expand_path(ctx, "{{source_dir}}/rulesets.xml"))
-    assert_argv_contains(env, action, "--minimum-priority")
-    assert_argv_contains(env, action, "3")
+    assert_flag_value(env, action, "--minimum-priority", "3")
     assert_argv_contains(env, action, "--format")
     assert_argv_contains(env, action, "html")
     assert_argv_contains(env, action, "--report-file")
@@ -186,8 +189,7 @@ def _action_full_contents_test_impl(ctx):
     assert_argv_contains(env, action, "--no-fail-on-violation")
     assert_argv_contains(env, action, "--no-cache")
     assert_argv_contains(env, action, "--no-progress")
-    assert_argv_contains(env, action, "--threads")
-    assert_argv_contains(env, action, "42")
+    assert_flag_value(env, action, "--threads", "42")
     assert_argv_contains(env, action, "--execution-result")
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_full_pmd_result.txt"))
 
@@ -237,7 +239,6 @@ action_full_contents_test = analysistest.make(_action_full_contents_test_impl)
 def _test_action_full_contents():
     pmd_config(
         name = "full_config",
-        fail_on_violation = False,
         rules_minimum_priority = 3,
         rulesets = ["rulesets.xml"],
         threads_count = 42,
@@ -249,10 +250,10 @@ def _test_action_full_contents():
         srcs_language = "java",
         srcs_language_version = "1.8",
         config = ":full_config",
+        fail_on_violation = False,
         report_format = "html",
         tags = ["manual"],
     )
-    _assert_rule_kind("test_target_full", "pmd_test")
 
     action_full_contents_test(
         name = "action_full_contents_test",
@@ -282,7 +283,6 @@ def _action_blank_contents_test_impl(ctx):
 
     action = actions[1]
 
-    asserts.equals(env, [], [arg for arg in action.argv if arg.startswith("--jvm_flag")])
     assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/pmd/wrapper/bin")
     assert_argv_contains(env, action, "--file-list")
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_test_target_blank.txt"))
@@ -292,8 +292,7 @@ def _action_blank_contents_test_impl(ctx):
     assert_argv_contains(env, action, "java")
     assert_argv_contains(env, action, "--rulesets")
     assert_argv_contains(env, action, _expand_path(ctx, "{{source_dir}}/rulesets.xml"))
-    assert_argv_contains(env, action, "--minimum-priority")
-    assert_argv_contains(env, action, "5")
+    assert_flag_value(env, action, "--minimum-priority", "5")
     assert_argv_contains(env, action, "--format")
     assert_argv_contains(env, action, "text")
     assert_argv_contains(env, action, "--report-file")
@@ -301,8 +300,7 @@ def _action_blank_contents_test_impl(ctx):
     assert_argv_lacks(env, action, "--no-fail-on-violation")
     assert_argv_contains(env, action, "--no-cache")
     assert_argv_contains(env, action, "--no-progress")
-    assert_argv_contains(env, action, "--threads")
-    assert_argv_contains(env, action, "1")
+    assert_flag_value(env, action, "--threads", "1")
     assert_argv_contains(env, action, "--execution-result")
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_blank_pmd_result.txt"))
 
@@ -434,14 +432,10 @@ def _action_build_no_fail_policy_test_impl(ctx):
 action_build_no_fail_policy_test = analysistest.make(_action_build_no_fail_policy_test_impl)
 
 def _test_action_build_no_fail_policy():
-    pmd_config(
-        name = "build_no_fail_config",
-        fail_on_violation = False,
-        rulesets = ["rulesets.xml"],
-    )
     pmd(
         name = "pmd_target_build_no_fail",
-        config = ":build_no_fail_config",
+        config = ":blank_config",
+        fail_on_violation = False,
         srcs = ["path A.kt"],
         tags = ["manual"],
     )
@@ -451,47 +445,43 @@ def _test_action_build_no_fail_policy():
         target_under_test = ":pmd_target_build_no_fail",
     )
 
-# Registered toolchains apply when a rule does not select an explicit profile.
+# The @rules_pmd//pmd:config label flag supplies the config when a rule omits it.
 
-def _test_registered_toolchain_target():
-    pmd_test(
-        name = "test_target_registered",
-        srcs = ["path A.kt", "path B.kt", "path C.kt"],
-        tags = ["manual"],
-    )
-    _assert_rule_kind("test_target_registered", "pmd_test")
-
-# Registered profile selection test
-
-def _action_registered_profile_test_impl(ctx):
+def _action_flag_config_test_impl(ctx):
     env = analysistest.begin(ctx)
 
-    actions = analysistest.target_actions(env)
-    pmd_actions = [action for action in actions if action.mnemonic == "PMD"]
-    asserts.equals(env, 1, len(pmd_actions))
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PMD"]
+    asserts.equals(env, 1, len(actions))
 
-    action = pmd_actions[0]
-    asserts.equals(env, [], [arg for arg in action.argv if arg.startswith("--jvm_flag")])
-    asserts.equals(env, "--file-list", action.argv[action.argv.index("check") + 1])
+    action = actions[0]
     assert_argv_contains(env, action, "--rulesets")
     assert_argv_contains(env, action, _expand_path(ctx, "{{source_dir}}/registered_rulesets.xml"))
-    assert_argv_contains(env, action, "--minimum-priority")
-    assert_argv_contains(env, action, "4")
-    assert_argv_contains(env, action, "--no-fail-on-violation")
-    assert_argv_contains(env, action, "--threads")
-    assert_argv_contains(env, action, "17")
+    assert_flag_value(env, action, "--minimum-priority", "4")
+    assert_flag_value(env, action, "--threads", "17")
+    assert_argv_lacks(env, action, "--no-fail-on-violation")
     assert_input_contains(env, action, _expand_path(ctx, "{{source_dir}}/registered_rulesets.xml"))
 
     return analysistest.end(env)
 
-action_registered_profile_test = analysistest.make(
-    _action_registered_profile_test_impl,
+action_flag_config_test = analysistest.make(
+    _action_flag_config_test_impl,
     config_settings = {
-        "//command_line_option:extra_toolchains": ["//tests/analysis:custom_toolchain"],
+        str(Label("//pmd:config")): str(Label("//tests/analysis:flag_config")),
     },
 )
 
-# Explicit profiles select all shared settings without inheriting the registered profile.
+def _test_action_flag_config():
+    pmd_test(
+        name = "test_target_flag_config",
+        srcs = ["path A.kt"],
+        tags = ["manual"],
+    )
+    action_flag_config_test(
+        name = "action_flag_config_test",
+        target_under_test = ":test_target_flag_config",
+    )
+
+# Explicit configs replace the label-flag default; the registered toolchain supplies the wrapper.
 
 def _action_config_a_test_impl(ctx):
     env = analysistest.begin(ctx)
@@ -503,18 +493,15 @@ def _action_config_a_test_impl(ctx):
     assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/tests/analysis/custom_pmd_wrapper")
     assert_argv_contains(env, action, "--rulesets")
     assert_argv_contains(env, action, _expand_path(ctx, "{{source_dir}}/rulesets_a.xml"))
-    assert_argv_contains(env, action, "--minimum-priority")
-    assert_argv_contains(env, action, "1")
+    assert_flag_value(env, action, "--minimum-priority", "1")
     assert_argv_lacks(env, action, "--no-fail-on-violation")
-    assert_argv_contains(env, action, "--threads")
-    assert_argv_contains(env, action, "3")
-    asserts.equals(env, [], [arg for arg in action.argv if arg.startswith("--jvm_flag")])
+    assert_flag_value(env, action, "--threads", "3")
     assert_input_contains(env, action, _expand_path(ctx, "{{source_dir}}/rulesets_a.xml"))
     assert_input_contains_suffix(env, action, "/custom_pmd_wrapper")
     asserts.false(
         env,
         _expand_path(ctx, "{{source_dir}}/registered_rulesets.xml") in _input_short_paths(action.inputs),
-        "Explicit profile must not inherit registered rulesets",
+        "Explicit config must not inherit the label-flag config's rulesets",
     )
 
     return analysistest.end(env)
@@ -523,6 +510,7 @@ action_config_a_test = analysistest.make(
     _action_config_a_test_impl,
     config_settings = {
         "//command_line_option:extra_toolchains": ["//tests/analysis:custom_toolchain"],
+        str(Label("//pmd:config")): str(Label("//tests/analysis:flag_config")),
     },
 )
 
@@ -533,7 +521,6 @@ def _test_action_config_a():
         srcs = ["path A.kt"],
         tags = ["manual"],
     )
-    _assert_rule_kind("test_target_config_a", "pmd")
     action_config_a_test(
         name = "action_config_a_test",
         target_under_test = ":test_target_config_a",
@@ -549,17 +536,15 @@ def _action_config_b_test_impl(ctx):
     assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/pmd/wrapper/bin")
     assert_argv_contains(env, action, "--rulesets")
     assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/tests/analysis/generated_ruleset.xml")
-    assert_argv_contains(env, action, "--minimum-priority")
-    assert_argv_contains(env, action, "2")
+    assert_flag_value(env, action, "--minimum-priority", "2")
     assert_argv_contains(env, action, "--no-fail-on-violation")
-    assert_argv_contains(env, action, "--threads")
-    assert_argv_contains(env, action, "7")
+    assert_flag_value(env, action, "--threads", "7")
     assert_input_contains(env, action, _expand_path(ctx, "{{source_dir}}/generated_ruleset.xml"))
     assert_input_contains(env, action, "pmd/wrapper/bin.runfiles")
     asserts.false(
         env,
         _expand_path(ctx, "{{source_dir}}/rulesets_a.xml") in _input_short_paths(action.inputs),
-        "Independent profiles must not inherit another profile's rulesets",
+        "Independent configs must not inherit another config's rulesets",
     )
 
     return analysistest.end(env)
@@ -570,6 +555,7 @@ def _test_action_config_b():
     pmd_test(
         name = "test_target_config_b",
         config = ":config_b",
+        fail_on_violation = False,
         srcs = ["path A.kt"],
         tags = ["manual"],
     )
@@ -578,9 +564,9 @@ def _test_action_config_b():
         target_under_test = ":test_target_config_b",
     )
 
-# select() chooses a complete profile; its settings do not merge with the other branch.
+# select() chooses a complete config; its settings do not merge with the other branch.
 
-def _action_select_test_impl(ctx):
+def _action_select_opt_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PMD"]
@@ -588,18 +574,41 @@ def _action_select_test_impl(ctx):
 
     action = actions[0]
     assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/tests/analysis/generated_ruleset.xml")
-    assert_argv_contains(env, action, "--minimum-priority")
-    assert_argv_contains(env, action, "2")
-    assert_argv_contains(env, action, "--no-fail-on-violation")
-    assert_argv_contains(env, action, "--threads")
-    assert_argv_contains(env, action, "7")
+    assert_argv_lacks(env, action, _expand_path(ctx, "{{source_dir}}/rulesets_a.xml"))
+    assert_flag_value(env, action, "--minimum-priority", "2")
+    assert_flag_value(env, action, "--threads", "7")
 
     return analysistest.end(env)
 
-action_select_test = analysistest.make(
-    _action_select_test_impl,
+action_select_opt_test = analysistest.make(
+    _action_select_opt_test_impl,
     config_settings = {
         "//command_line_option:compilation_mode": "opt",
+    },
+)
+
+def _action_select_default_test_impl(ctx):
+    env = analysistest.begin(ctx)
+
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "PMD"]
+    asserts.equals(env, 1, len(actions))
+
+    action = actions[0]
+    assert_argv_contains(env, action, _expand_path(ctx, "{{source_dir}}/rulesets_a.xml"))
+    asserts.false(
+        env,
+        _expand_path(ctx, "{{source_dir}}/generated_ruleset.xml") in _input_short_paths(action.inputs),
+        "The default select() branch must not inherit the opt branch's rulesets",
+    )
+    assert_flag_value(env, action, "--minimum-priority", "1")
+    assert_flag_value(env, action, "--threads", "3")
+
+    return analysistest.end(env)
+
+action_select_default_test = analysistest.make(
+    _action_select_default_test_impl,
+    config_settings = {
+        "//command_line_option:compilation_mode": "fastbuild",
     },
 )
 
@@ -613,20 +622,35 @@ def _test_action_select():
         srcs = ["path A.kt"],
         tags = ["manual"],
     )
-    action_select_test(
-        name = "action_select_test",
+    action_select_opt_test(
+        name = "action_select_opt_test",
+        target_under_test = ":test_target_select",
+    )
+    action_select_default_test(
+        name = "action_select_default_test",
         target_under_test = ":test_target_select",
     )
 
-# Empty filegroups must fail during analysis with an actionable profile error.
+# Empty configs must fail during analysis with an error naming the selected config.
 
 def _action_missing_rulesets_test_impl(ctx):
     env = analysistest.begin(ctx)
-    asserts.expect_failure(env, "no ruleset files")
+    asserts.expect_failure(env, "//tests/analysis:empty_config selected by")
     return analysistest.end(env)
 
 action_missing_rulesets_test = analysistest.make(
     _action_missing_rulesets_test_impl,
+    expect_failure = True,
+)
+
+def _action_missing_default_rulesets_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    asserts.expect_failure(env, "//pmd:default_config selected by")
+    asserts.expect_failure(env, "no ruleset files")
+    return analysistest.end(env)
+
+action_missing_default_rulesets_test = analysistest.make(
+    _action_missing_default_rulesets_test_impl,
     expect_failure = True,
 )
 
@@ -646,7 +670,7 @@ def _test_action_missing_rulesets():
         srcs = ["path A.kt"],
         tags = ["manual"],
     )
-    action_missing_rulesets_test(
+    action_missing_default_rulesets_test(
         name = "action_missing_default_rulesets_test",
         target_under_test = ":test_target_missing_default_rulesets",
     )
@@ -736,17 +760,13 @@ def test_suite(name):
     _test_action_blank_contents()
     _test_action_build_contents()
     _test_action_build_no_fail_policy()
-    _test_registered_toolchain_target()
+    _test_action_flag_config()
     _test_action_config_a()
     _test_action_config_b()
     _test_action_select()
     _test_action_missing_rulesets()
     _test_action_language_alias("vf", "visualforce")
     _test_action_language_alias("vm", "velocity")
-    action_registered_profile_test(
-        name = "action_registered_profile_test",
-        target_under_test = ":test_target_registered",
-    )
     pmd_version_test(name = "pmd_version_test")
 
     native.test_suite(
@@ -758,12 +778,13 @@ def test_suite(name):
             ":action_build_no_fail_policy_test",
             ":action_config_a_test",
             ":action_config_b_test",
-            ":action_select_test",
+            ":action_select_opt_test",
+            ":action_select_default_test",
             ":action_missing_rulesets_test",
             ":action_missing_default_rulesets_test",
             ":action_language_alias_vf_test",
             ":action_language_alias_vm_test",
-            ":action_registered_profile_test",
+            ":action_flag_config_test",
             ":pmd_version_test",
         ],
     )

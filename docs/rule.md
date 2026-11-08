@@ -8,7 +8,8 @@ Name           | Type                               | Default            | Descr
 ---------------|------------------------------------|--------------------|------------
 `name` | [`name`](https://docs.bazel.build/versions/master/build-ref.html#name) | — | A unique name for this target.
 `srcs` | [`[Label]`](https://docs.bazel.build/versions/master/skylark/lib/list.html) | — | Source code files.
-`config` | [`Label`](https://docs.bazel.build/versions/master/skylark/lib/Label.html) | `None` | PMD configuration. Replaces the registered toolchain's default_config completely when provided.
+`config` | [`Label`](https://docs.bazel.build/versions/master/skylark/lib/Label.html) | `"@rules_pmd//pmd:config"` | PMD configuration. Defaults to the `@rules_pmd//pmd:config` label flag; an explicit value replaces it completely.
+`fail_on_violation` | [`bool`](https://docs.bazel.build/versions/master/skylark/lib/bool.html) | `True` | See [PMD `--fail-on-violation` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)
 `report_format` | [`string`](https://docs.bazel.build/versions/master/skylark/lib/string.html) | `"text"` | See [PMD `--format` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)
 `srcs_encoding` | [`string`](https://docs.bazel.build/versions/master/skylark/lib/string.html) | `"UTF-8"` | See [PMD `--encoding` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)
 `srcs_ignore` | [`[Label]`](https://docs.bazel.build/versions/master/skylark/lib/list.html) | `[]` | Source code files to ignore.
@@ -22,7 +23,8 @@ Name           | Type                               | Default            | Descr
 ---------------|------------------------------------|--------------------|------------
 `name` | [`name`](https://docs.bazel.build/versions/master/build-ref.html#name) | — | A unique name for this target.
 `srcs` | [`[Label]`](https://docs.bazel.build/versions/master/skylark/lib/list.html) | — | Source code files.
-`config` | [`Label`](https://docs.bazel.build/versions/master/skylark/lib/Label.html) | `None` | PMD configuration. Replaces the registered toolchain's default_config completely when provided.
+`config` | [`Label`](https://docs.bazel.build/versions/master/skylark/lib/Label.html) | `"@rules_pmd//pmd:config"` | PMD configuration. Defaults to the `@rules_pmd//pmd:config` label flag; an explicit value replaces it completely.
+`fail_on_violation` | [`bool`](https://docs.bazel.build/versions/master/skylark/lib/bool.html) | `True` | See [PMD `--fail-on-violation` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)
 `report_format` | [`string`](https://docs.bazel.build/versions/master/skylark/lib/string.html) | `"text"` | See [PMD `--format` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)
 `srcs_encoding` | [`string`](https://docs.bazel.build/versions/master/skylark/lib/string.html) | `"UTF-8"` | See [PMD `--encoding` option](https://docs.pmd-code.org/latest/pmd_userdocs_cli_reference.html)
 `srcs_ignore` | [`[Label]`](https://docs.bazel.build/versions/master/skylark/lib/list.html) | `[]` | Source code files to ignore.

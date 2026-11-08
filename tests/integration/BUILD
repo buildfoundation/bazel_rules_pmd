@@ -14,12 +14,6 @@ pmd_config(
     rulesets = ["pmd_rulesets_errorless.xml"],
 )
 
-pmd_config(
-    name = "pmd_error_no_fail_config",
-    fail_on_violation = False,
-    rulesets = ["pmd_rulesets_error.xml"],
-)
-
 pmd(
     name = "pmd_build_clean",
     srcs = ["src/main/java/A.java"],
@@ -31,7 +25,8 @@ pmd(
 pmd(
     name = "pmd_build_no_fail",
     srcs = ["src/main/java/A.java"],
-    config = ":pmd_error_no_fail_config",
+    config = ":pmd_error_config",
+    fail_on_violation = False,
     report_format = "text",
 )
 
@@ -156,7 +151,8 @@ sh_test(
 pmd_test(
     name = "pmd_error_no_fail",
     srcs = glob(["src/main/java/**/*.java"]),
-    config = ":pmd_error_no_fail_config",
+    config = ":pmd_error_config",
+    fail_on_violation = False,
     report_format = "text",
 )
 
