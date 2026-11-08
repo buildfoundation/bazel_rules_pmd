@@ -134,12 +134,12 @@ def _action_full_contents_test_impl(ctx):
     actions = analysistest.target_actions(env)
     asserts.equals(env, 9, len(actions))
 
-    # Action: writing file "srcs.txt"
+    # Action: writing file "<name>_srcs.txt"
 
     action_write_file_srcs = actions[0]
 
     action_write_file_srcs_outputs_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs_test_target_full.txt",
+        "{{output_dir}}/{{source_dir}}/test_target_full_srcs.txt",
     ])
     action_write_file_srcs_outputs_actual = [file.path for file in action_write_file_srcs.outputs.to_list()]
 
@@ -150,12 +150,12 @@ def _action_full_contents_test_impl(ctx):
         "{{source_dir}}/path C.kt",
     ])), action_write_file_srcs.content)
 
-    # Action: writing file "srcs_ignore.txt"
+    # Action: writing file "<name>_srcs_ignore.txt"
 
     action_write_file_srcs_ignore = actions[1]
 
     action_write_file_srcs_ignore_ouptuts_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs_ignore_test_target_full.txt",
+        "{{output_dir}}/{{source_dir}}/test_target_full_srcs_ignore.txt",
     ])
     action_write_file_srcs_ignore_ouptuts_actual = [file.path for file in action_write_file_srcs_ignore.outputs.to_list()]
 
@@ -170,9 +170,9 @@ def _action_full_contents_test_impl(ctx):
     action = actions[2]
     assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/pmd/wrapper/bin")
     assert_argv_contains(env, action, "--file-list")
-    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_test_target_full.txt"))
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_full_srcs.txt"))
     assert_argv_contains(env, action, "--exclude-file-list")
-    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_ignore_test_target_full.txt"))
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_full_srcs_ignore.txt"))
     assert_argv_contains(env, action, "--encoding")
     assert_argv_contains(env, action, "UTF-8")
     assert_argv_contains(env, action, "--force-language")
@@ -194,11 +194,11 @@ def _action_full_contents_test_impl(ctx):
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_full_pmd_result.txt"))
 
     expected_inputs = _expand_paths(env.ctx, [
-        "{{source_dir}}/srcs_test_target_full.txt",
+        "{{source_dir}}/test_target_full_srcs.txt",
         "{{source_dir}}/path A.kt",
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
-        "{{source_dir}}/srcs_ignore_test_target_full.txt",
+        "{{source_dir}}/test_target_full_srcs_ignore.txt",
         "{{source_dir}}/path D.kt",
         "{{source_dir}}/path E.kt",
         "{{source_dir}}/rulesets.xml",
@@ -268,12 +268,12 @@ def _action_blank_contents_test_impl(ctx):
     actions = analysistest.target_actions(env)
     asserts.equals(env, 8, len(actions))
 
-    # Action: writing file "srcs.txt"
+    # Action: writing file "<name>_srcs.txt"
 
     action_write_file_srcs = actions[0]
 
     action_write_file_srcs_outputs_expected = _expand_paths(env.ctx, [
-        "{{output_dir}}/{{source_dir}}/srcs_test_target_blank.txt",
+        "{{output_dir}}/{{source_dir}}/test_target_blank_srcs.txt",
     ])
     action_write_file_srcs_outputs_actual = [file.path for file in action_write_file_srcs.outputs.to_list()]
 
@@ -285,7 +285,7 @@ def _action_blank_contents_test_impl(ctx):
 
     assert_argv_contains_prefix_suffix(env, action, "bazel-out/", "/pmd/wrapper/bin")
     assert_argv_contains(env, action, "--file-list")
-    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/srcs_test_target_blank.txt"))
+    assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_blank_srcs.txt"))
     assert_argv_contains(env, action, "--encoding")
     assert_argv_contains(env, action, "UTF-8")
     assert_argv_contains(env, action, "--force-language")
@@ -305,7 +305,7 @@ def _action_blank_contents_test_impl(ctx):
     assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/test_target_blank_pmd_result.txt"))
 
     expected_inputs = _expand_paths(env.ctx, [
-        "{{source_dir}}/srcs_test_target_blank.txt",
+        "{{source_dir}}/test_target_blank_srcs.txt",
         "{{source_dir}}/path A.kt",
         "{{source_dir}}/path B.kt",
         "{{source_dir}}/path C.kt",
@@ -379,7 +379,7 @@ def _action_build_contents_test_impl(ctx):
     asserts.equals(env, 0, len([action for action in actions if action.mnemonic == "TemplateExpand"]))
 
     expected_inputs = _expand_paths(env.ctx, [
-        "{{source_dir}}/srcs_pmd_target_build.txt",
+        "{{source_dir}}/pmd_target_build_srcs.txt",
         "{{source_dir}}/path A.kt",
         "{{source_dir}}/rulesets.xml",
         "pmd/wrapper/bin",
@@ -674,6 +674,48 @@ def _test_action_missing_rulesets():
         target_under_test = ":test_target_missing_default_rulesets",
     )
 
+# Generated file lists are prefixed with the target name, so `x`'s srcs_ignore list
+# cannot collide with the srcs list of a target named `ignore_x`.
+
+def _action_file_list_name_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    action = [action for action in analysistest.target_actions(env) if action.mnemonic == "PMD"][0]
+    for name in ctx.attr.expected_lists:
+        assert_argv_contains(env, action, _expand_path(ctx, "{{output_dir}}/{{source_dir}}/" + name))
+    return analysistest.end(env)
+
+action_file_list_name_test = analysistest.make(
+    _action_file_list_name_test_impl,
+    attrs = {
+        "expected_lists": attr.string_list(mandatory = True),
+    },
+)
+
+def _test_action_file_list_names():
+    pmd(
+        name = "name_clash",
+        srcs = ["path A.kt"],
+        srcs_ignore = ["path B.kt"],
+        config = ":blank_config",
+        tags = ["manual"],
+    )
+    pmd(
+        name = "ignore_name_clash",
+        srcs = ["path A.kt"],
+        config = ":blank_config",
+        tags = ["manual"],
+    )
+    action_file_list_name_test(
+        name = "action_file_list_name_test",
+        expected_lists = ["name_clash_srcs.txt", "name_clash_srcs_ignore.txt"],
+        target_under_test = ":name_clash",
+    )
+    action_file_list_name_test(
+        name = "action_file_list_name_ignore_prefix_test",
+        expected_lists = ["ignore_name_clash_srcs.txt"],
+        target_under_test = ":ignore_name_clash",
+    )
+
 # PMD 6 language aliases retained by the public rule API
 
 def _action_language_alias_test_impl(ctx):
@@ -764,6 +806,7 @@ def test_suite(name):
     _test_action_config_b()
     _test_action_select()
     _test_action_missing_rulesets()
+    _test_action_file_list_names()
     _test_action_language_alias("vf", "visualforce")
     _test_action_language_alias("vm", "velocity")
     pmd_version_test(name = "pmd_version_test")
@@ -781,6 +824,8 @@ def test_suite(name):
             ":action_select_default_test",
             ":action_missing_rulesets_test",
             ":action_missing_default_rulesets_test",
+            ":action_file_list_name_test",
+            ":action_file_list_name_ignore_prefix_test",
             ":action_language_alias_vf_test",
             ":action_language_alias_vm_test",
             ":action_registered_config_test",
