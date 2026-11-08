@@ -1,4 +1,10 @@
+load("//pmd:config.bzl", "pmd_config")
 load("//pmd:toolchain.bzl", "pmd_toolchain")
+
+pmd_config(
+    name = "default_config",
+    visibility = ["//visibility:public"],
+)
 
 toolchain_type(
     name = "toolchain_type",
@@ -16,8 +22,10 @@ toolchain(
 )
 
 exports_files([
+    "config.bzl",
     "defs.bzl",
     "BUILD.pmd.bazel",
     "execution_result.sh.tpl",
     "run_pmd.sh",
+    "toolchain.bzl",
 ])

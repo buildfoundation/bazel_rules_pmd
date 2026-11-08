@@ -2,15 +2,28 @@
 Toolchain declaration.
 """
 
+load(":config.bzl", "PmdConfigInfo")
+
 def _impl(ctx):
-    return [platform_common.ToolchainInfo(jvm_flags = ctx.attr.jvm_flags)]
+    return [platform_common.ToolchainInfo(
+        pmd_wrapper = ctx.attr.pmd_wrapper[DefaultInfo].files_to_run,
+        default_config = ctx.attr.default_config[PmdConfigInfo],
+        default_config_label = ctx.attr.default_config.label,
+    )]
 
 pmd_toolchain = rule(
     implementation = _impl,
     attrs = {
-        "jvm_flags": attr.string_list(
-            default = [],
-            doc = "JVM flags used for PMD execution.",
+        "default_config": attr.label(
+            default = Label("//pmd:default_config"),
+            providers = [PmdConfigInfo],
+            doc = "Configuration used when a PMD target omits config.",
+        ),
+        "pmd_wrapper": attr.label(
+            default = Label("//pmd/wrapper:bin"),
+            executable = True,
+            cfg = "exec",
+            doc = "Executable wrapper used to run PMD.",
         ),
     },
 )
