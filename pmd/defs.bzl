@@ -5,6 +5,7 @@ PMD build and test rules.
 load(":config.bzl", "PmdConfigInfo")
 
 TOOLCHAIN_TYPE = Label("//pmd:toolchain_type")
+_SH_TOOLCHAIN_TYPE = Label("@rules_shell//shell:toolchain_type")
 
 _LANGUAGE_ALIASES = {
     "vf": "visualforce",
@@ -108,10 +109,11 @@ def _impl(ctx, is_test):
     stage_args.add_all(source_lists + config.rulesets + outputs)
     stage_args.add("--")
 
-    ctx.actions.run(
+    # run_shell resolves Bash on every platform; Windows cannot exec a .sh directly.
+    ctx.actions.run_shell(
         mnemonic = "PMD",
-        executable = ctx.file._runner,
-        tools = [pmd_toolchain.pmd_wrapper],
+        command = '"{}" "$@"'.format(ctx.file._runner.path),
+        tools = [pmd_toolchain.pmd_wrapper, ctx.file._runner],
         inputs = inputs,
         outputs = outputs,
         arguments = [stage_args, arguments],
@@ -133,16 +135,48 @@ def _impl(ctx, is_test):
         is_executable = True,
     )
 
-    runfiles = ctx.runfiles(files = [report_file, pmd_result])
+    runfiles = ctx.runfiles(files = [report_file, pmd_result, execution_result])
     runfiles = runfiles.merge(ctx.attr._runfiles[DefaultInfo].default_runfiles)
+
+    files = [report_file, execution_result]
+    executable = execution_result
+    if ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]):
+        executable = _windows_bash_launcher(ctx, execution_result)
+        files.append(executable)
 
     return [
         DefaultInfo(
-            files = depset([report_file, execution_result]),
-            executable = execution_result,
+            files = depset(files),
+            executable = executable,
             runfiles = runfiles,
         ),
     ]
+
+def _windows_bash_launcher(ctx, script):
+    # Mirrors rules_shell's sh_test launcher: Windows tests must be .exe files.
+    sh = ctx.toolchains[_SH_TOOLCHAIN_TYPE]
+    if not sh or not sh.path or not sh.launcher or not sh.launcher_maker:
+        fail("pmd_test on Windows needs Bash; set BAZEL_SH to the path of bash.exe")
+
+    launcher = ctx.actions.declare_file(ctx.label.name + ".exe")
+    launch_info = ctx.actions.args().use_param_file("%s", use_always = True).set_param_file_format("multiline")
+    launch_info.add("binary_type=Bash")
+    launch_info.add(ctx.workspace_name, format = "workspace_name=%s")
+
+    # runfiles_enabled() is private API; the manifest exists either way and runfiles.bash reads it.
+    launch_info.add("symlink_runfiles_enabled=0")
+    launch_info.add(sh.path, format = "bash_bin_path=%s")
+    launch_info.add(_runfile_path(ctx, script), format = "bash_file_rlocationpath=%s")
+
+    ctx.actions.run(
+        executable = sh.launcher_maker,
+        inputs = [sh.launcher],
+        outputs = [launcher],
+        arguments = [sh.launcher.path, launch_info, launcher.path],
+        mnemonic = "PmdTestLauncher",
+        toolchain = _SH_TOOLCHAIN_TYPE,
+    )
+    return launcher
 
 def _write_files_list(ctx, files, file_name):
     file = ctx.actions.declare_file(file_name)
@@ -184,6 +218,10 @@ _ATTRS = {
     ),
     "_runfiles": attr.label(
         default = "@rules_shell//shell/runfiles",
+    ),
+    "_windows_constraint": attr.label(
+        default = "@platforms//os:windows",
+        providers = [platform_common.ConstraintValueInfo],
     ),
     "srcs": attr.label_list(
         allow_files = True,
@@ -240,6 +278,9 @@ pmd_test = rule(
     implementation = _pmd_test_impl,
     attrs = _ATTRS,
     provides = [DefaultInfo],
-    toolchains = [TOOLCHAIN_TYPE],
+    toolchains = [
+        TOOLCHAIN_TYPE,
+        config_common.toolchain_type(_SH_TOOLCHAIN_TYPE, mandatory = False),
+    ],
     test = True,
 )

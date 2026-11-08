@@ -21,14 +21,25 @@ while [[ $1 != -- ]]; do
 done
 shift
 
-# Keep lists, rulesets and outputs connected to the action's execroot.
+# Copy lists and rulesets in, and outputs back out afterwards. Windows Bash
+# cannot symlink to outputs that do not exist yet.
+outputs=()
 while [[ $1 != -- ]]; do
     dest="$work/$1"
-    if [[ ! -e $dest && ! -L $dest ]]; then
-        mkdir -p "$(dirname "$dest")"
-        ln -s "$PWD/$1" "$dest"
+    mkdir -p "$(dirname "$dest")"
+    if [[ ! -e $1 ]]; then
+        outputs+=("$1")
+    elif [[ ! -e $dest ]]; then
+        cp -RH "$1" "$dest"
     fi
     shift
 done
 shift
-(cd "$work" && RULES_PMD_STAGED_SOURCES=1 "$wrapper" "$@")
+status=0
+(cd "$work" && RULES_PMD_STAGED_SOURCES=1 "$wrapper" "$@") || status=$?
+for output in "${outputs[@]}"; do
+    if [[ -e $work/$output ]]; then
+        cp "$work/$output" "$output"
+    fi
+done
+exit "$status"

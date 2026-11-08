@@ -4,7 +4,9 @@ set -euo pipefail
 readonly EXPECTED_STATUS="$1"
 readonly execution_result="$2"
 readonly report_extension="${3:-txt}"
-readonly report_file="${execution_result%_execution_result.sh}_pmd_report.${report_extension}"
+# On Windows the test executable is the <name>.exe launcher.
+target="${execution_result%.exe}"
+readonly report_file="${target%_execution_result.sh}_pmd_report.${report_extension}"
 readonly output_file="${TEST_TMPDIR}/pmd-output"
 
 test -f "${report_file}"

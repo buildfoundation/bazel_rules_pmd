@@ -14,7 +14,7 @@ def _expand_path(ctx, value):
 
 def assert_argv_contains_prefix_suffix(env, action, prefix, suffix):
     for arg in action.argv:
-        if arg.startswith(prefix) and arg.endswith(suffix):
+        if arg.startswith(prefix) and arg.removesuffix(".exe").endswith(suffix):
             return
     unittest.fail(
         env,
@@ -74,8 +74,10 @@ def _input_short_path(file):
     prefix = "_middlemen/"
     suffix = "-runfiles"
     if path.startswith(prefix) and path.endswith(suffix):
-        return _unescape_middleman(path[len(prefix):len(path) - len(suffix)]) + ".runfiles"
-    return path
+        path = _unescape_middleman(path[len(prefix):len(path) - len(suffix)]) + ".runfiles"
+
+    # Windows executables carry an .exe extension.
+    return path.replace(".exe", "")
 
 def _input_short_paths(files):
     return [_input_short_path(file) for file in files.to_list()]
@@ -116,6 +118,7 @@ def _assert_public_files_and_runfiles(env, report, execution_result, pmd_result)
     asserts.equals(env, sorted([report, execution_result]), sorted([
         file.short_path
         for file in default_info.files.to_list()
+        if file.extension != "exe"
     ]))
 
     runfile_paths = [
@@ -132,7 +135,7 @@ def _action_full_contents_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = analysistest.target_actions(env)
-    asserts.equals(env, 9, len(actions))
+    asserts.equals(env, 9, len([a for a in actions if a.mnemonic != "PmdTestLauncher"]))  # Windows-only launcher
 
     # Action: writing file "<name>_srcs.txt"
 
@@ -266,7 +269,7 @@ def _action_blank_contents_test_impl(ctx):
     env = analysistest.begin(ctx)
 
     actions = analysistest.target_actions(env)
-    asserts.equals(env, 8, len(actions))
+    asserts.equals(env, 8, len([a for a in actions if a.mnemonic != "PmdTestLauncher"]))  # Windows-only launcher
 
     # Action: writing file "<name>_srcs.txt"
 
