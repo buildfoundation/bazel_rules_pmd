@@ -155,6 +155,7 @@ def _action_full_contents_test_impl(ctx):
         "{{source_dir}}/rulesets.xml",
         "pmd/wrapper/bin",
         "pmd/wrapper/bin.jar",
+        "pmd/run_pmd.sh",
     ])
 
     expected_outputs = _expand_paths(env.ctx, [
@@ -259,6 +260,7 @@ def _action_blank_contents_test_impl(ctx):
         "{{source_dir}}/rulesets.xml",
         "pmd/wrapper/bin",
         "pmd/wrapper/bin.jar",
+        "pmd/run_pmd.sh",
     ])
 
     expected_outputs = _expand_paths(env.ctx, [
@@ -324,6 +326,7 @@ def _action_build_contents_test_impl(ctx):
         "{{source_dir}}/rulesets.xml",
         "pmd/wrapper/bin",
         "pmd/wrapper/bin.jar",
+        "pmd/run_pmd.sh",
     ])
     expected_outputs = _expand_paths(env.ctx, [
         "{{source_dir}}/pmd_target_build_pmd_report.txt",
@@ -394,13 +397,13 @@ def _action_custom_jvm_flags_test_impl(ctx):
     asserts.equals(env, 1, len(pmd_actions))
 
     action = pmd_actions[0]
+    check_index = action.argv.index("check")
     asserts.equals(env, [
         "--jvm_flag=-Xms16m",
         "--jvm_flag=-Dexample.property=value with spaces",
         "--jvm_flag=-Xmx128m",
-    ], action.argv[1:4])
-    asserts.equals(env, "check", action.argv[4])
-    asserts.equals(env, "--file-list", action.argv[5])
+    ], action.argv[check_index - 3:check_index])
+    asserts.equals(env, "--file-list", action.argv[check_index + 1])
 
     return analysistest.end(env)
 
@@ -476,8 +479,8 @@ def _pmd_version_test_impl(ctx):
     asserts.equals(env, "7.0.0", custom.version)
     asserts.equals(env, "custom-sha", custom.sha256)
     asserts.equals(env, custom_urls, custom.url_templates)
-    asserts.equals(env, "7.28.0", DEFAULT_PMD_RELEASE.version)
-    asserts.equals(env, "f974ba571f7bc01c73fffe11bade25fbc1f438698f9e9c00e416e8d65e9fbac2", DEFAULT_PMD_RELEASE.sha256)
+    asserts.equals(env, "7.29.0", DEFAULT_PMD_RELEASE.version)
+    asserts.equals(env, "d27177c185b837fa57f097e482d1253468aa035379c5eb2671fa0a279109b179", DEFAULT_PMD_RELEASE.sha256)
     asserts.equals(env, default_urls, DEFAULT_PMD_RELEASE.url_templates)
 
     return unittest.end(env)
